@@ -480,8 +480,8 @@
 |-----------|-------------|---------|
 | **Web Frontend** | Cloud Run / Firebase Hosting | Serve SPA (React/Next.js) |
 | **API Backend** | Cloud Run | REST API (Node.js/Go/Python) |
-| **Database** | Cloud SQL (PostgreSQL) | Primary data store |
-| **Real-time Sync** | Firestore or Cloud Pub/Sub | Live collaboration & cross-device sync |
+| **Database** | Cloud Firestore (NoSQL) | Primary data store (see rationale below) |
+| **Real-time Sync** | Firestore real-time listeners | Live collaboration & cross-device sync |
 | **File Storage** | Cloud Storage | Attachments, images, backups |
 | **Authentication** | Firebase Auth | User auth, OAuth, 2FA |
 | **Push Notifications** | Firebase Cloud Messaging (FCM) | Mobile & web push |
@@ -492,7 +492,22 @@
 | **Monitoring** | Cloud Monitoring + Logging | Ops, alerting, SLAs |
 | **CI/CD** | Cloud Build | Automated deployments |
 
-### 20.2 Data Model (High-Level)
+### 20.2 SQL vs NoSQL Decision: **NoSQL (Firestore)**
+
+| Factor | SQL (Cloud SQL/Postgres) | NoSQL (Firestore) | Winner |
+|--------|--------------------------|-------------------|--------|
+| **Data structure** | Rigid schema, joins for tags/subtasks/attachments | Nested documents map naturally to tasks | **NoSQL** |
+| **Real-time sync** | Requires WebSocket layer + custom sync | Built-in real-time listeners, offline-first SDK | **NoSQL** |
+| **Offline support** | Custom implementation needed | Native offline persistence + conflict resolution | **NoSQL** |
+| **Multi-platform** | Need ORM per platform | Flutter/Web/Node SDKs with identical API | **NoSQL** |
+| **Scaling** | Vertical + read replicas | Auto-scales horizontally | **NoSQL** |
+| **Complex queries** | Strong (filters, aggregations, joins) | Limited (composite indexes, no joins) | SQL |
+| **Cost at scale** | Predictable | Pay-per-read/write can spike | SQL |
+| **Collaboration** | Transaction-based | Real-time merge built-in | **NoSQL** |
+
+**Verdict:** For a task management app, the data is hierarchical (users → lists → tasks → subtasks), real-time sync across devices is critical, and offline-first is a must. Firestore wins on 5/7 factors. For analytics/statistics, we can use BigQuery exports or Cloud Functions aggregation.
+
+### 20.3 Data Model (High-Level)
 
 - **Users** — account, profile, settings, subscription
 - **Lists** — name, color, icon, folder, owner, shared members
