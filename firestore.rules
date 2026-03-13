@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidPriority() {
+      return request.resource.data.priority in [0, 1, 2, 3];
+    }
+
+    // ── Users ─────────────────────────────────────────
+    // Only the authenticated owner can read/write their own user doc
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // ── Lists (subcollection) ─────────────────────
+      match /lists/{listId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && hasRequiredFields(['name', 'createdAt']);
+        allow update: if isOwner(uid);
+        allow delete: if isOwner(uid);
+      }
+
+      // ── Tasks (subcollection) ─────────────────────
+      match /tasks/{taskId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && hasRequiredFields(['title', 'listId', 'createdAt', 'completed'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.completed is bool;
+        allow update: if isOwner(uid)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0;
+        allow delete: if isOwner(uid);
+
+        // ── Subtasks ────────────────────────────────
+        match /subtasks/{subtaskId} {
+          allow read, write: if isOwner(uid);
+        }
+
+        // ── Comments ────────────────────────────────
+        match /comments/{commentId} {
+          allow read: if isOwner(uid);
+          allow create: if isAuthenticated()
+            && hasRequiredFields(['text', 'authorId', 'createdAt']);
+          allow update, delete: if isAuthenticated()
+            && resource.data.authorId == request.auth.uid;
+        }
+      }
+
+      // ── Tags (subcollection) ──────────────────────
+      match /tags/{tagId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Habits (subcollection) ────────────────────
+      match /habits/{habitId} {
+        allow read, write: if isOwner(uid);
+
+        match /logs/{logId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      // ── Pomodoro Sessions (subcollection) ─────────
+      match /pomodoroSessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Filters (subcollection) ───────────────────
+      match /filters/{filterId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+  }
+}

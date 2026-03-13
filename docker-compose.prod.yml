@@ -1,0 +1,24 @@
+version: "3.8"
+
+# Production overrides — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  backend:
+    build:
+      target: production
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - GCLOUD_PROJECT=${GCLOUD_PROJECT}
+    volumes: []
+    command: ["node", "dist/index.js"]
+    depends_on: []
+    restart: unless-stopped
+
+  # Disable Firebase emulators in production
+  firebase:
+    profiles:
+      - disabled
