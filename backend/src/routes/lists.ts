@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../config/firebase";
 import { getUid } from "../middleware/auth";
+import { getTierLimits } from "../middleware/subscription";
 import { validate } from "../middleware/validate";
 import { CreateListSchema, UpdateListSchema } from "../models/schemas";
 
@@ -27,6 +28,23 @@ router.post("/", validate(CreateListSchema), async (req: Request, res: Response)
   const uid = getUid(res);
   const now = new Date().toISOString();
   try {
+    // Enforce list count limit
+    const limits = getTierLimits(res);
+    if (limits.maxLists !== Infinity) {
+      const snapshot = await listsCollection(uid).count().get();
+      const count = snapshot.data().count;
+      if (count >= limits.maxLists) {
+        res.status(403).json({
+          error: "List limit reached",
+          code: "LIMIT_EXCEEDED",
+          limit: limits.maxLists,
+          current: count,
+          upgrade: true,
+        });
+        return;
+      }
+    }
+
     const listData = {
       ...req.body,
       archived: false,

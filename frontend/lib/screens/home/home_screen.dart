@@ -26,10 +26,11 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedTab = ref.watch(selectedTabProvider);
 
-    // Ensure default list exists
+    // Ensure default list and user profile exist
     final user = ref.watch(currentUserProvider);
     if (user != null) {
       ref.read(firestoreServiceProvider).createDefaultList(user.uid);
+      ref.read(firestoreServiceProvider).ensureUserProfile(user.uid);
     }
 
     final screens = [

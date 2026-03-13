@@ -4,8 +4,10 @@ import 'package:uuid/uuid.dart';
 import 'package:ticktick_clone/models/task_list.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/list_provider.dart';
+import 'package:ticktick_clone/providers/subscription_provider.dart';
 import 'package:ticktick_clone/providers/task_provider.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
+import 'package:ticktick_clone/widgets/upgrade_prompt.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -101,6 +103,19 @@ class ListsScreen extends ConsumerWidget {
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
+    // Check list limit
+    final limits = ref.read(tierLimitsProvider);
+    final lists = ref.read(listsStreamProvider).value ?? [];
+    if (limits.maxLists != null && lists.length >= limits.maxLists!) {
+      UpgradePromptDialog.show(
+        context,
+        feature: 'lists',
+        currentCount: lists.length,
+        limit: limits.maxLists!,
+      );
+      return;
+    }
+
     final nameController = TextEditingController();
     int selectedColor = 0xFF2196F3;
 

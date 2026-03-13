@@ -7,6 +7,8 @@ import 'package:ticktick_clone/models/user_settings.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/settings_provider.dart';
 import 'package:ticktick_clone/screens/settings/profile_screen.dart';
+import 'package:ticktick_clone/providers/subscription_provider.dart';
+import 'package:ticktick_clone/screens/subscription/paywall_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -17,6 +19,8 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final themeMode = ref.watch(themeModeProvider);
     final settings = ref.watch(userSettingsProvider);
+    final subscription = ref.watch(subscriptionProvider);
+    final isPremium = subscription.value?.isPremium ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -47,6 +51,39 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
+          ),
+          const Divider(),
+
+          // Subscription section
+          const _SectionHeader(title: 'Subscription'),
+          ListTile(
+            leading: Icon(
+              isPremium ? Icons.workspace_premium : Icons.star_outline,
+              color: isPremium ? Colors.amber : null,
+            ),
+            title: Text(isPremium ? 'Premium' : 'Free Plan'),
+            subtitle: Text(isPremium
+                ? 'Unlimited access to all features'
+                : 'Upgrade for unlimited lists, tasks, and more'),
+            trailing: isPremium
+                ? Chip(
+                    label: const Text('Active'),
+                    backgroundColor: Colors.green.withAlpha(30),
+                    labelStyle: const TextStyle(color: Colors.green),
+                    side: BorderSide.none,
+                  )
+                : FilledButton.tonal(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PaywallScreen()),
+                    ),
+                    child: const Text('Upgrade'),
+                  ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PaywallScreen()),
             ),
           ),
           const Divider(),

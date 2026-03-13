@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../config/firebase";
 import { getUid } from "../middleware/auth";
+import { getTierLimits } from "../middleware/subscription";
 import { validate } from "../middleware/validate";
 import {
   CreateTaskSchema,
@@ -37,6 +38,28 @@ router.post("/", validate(CreateTaskSchema), async (req: Request, res: Response)
   const uid = getUid(res);
   const now = new Date().toISOString();
   try {
+    // Enforce tasks-per-list limit
+    const limits = getTierLimits(res);
+    const listId = req.body.listId;
+    if (listId && limits.maxTasksPerList !== Infinity) {
+      const snapshot = await tasksCollection(uid)
+        .where("listId", "==", listId)
+        .where("completed", "==", false)
+        .count()
+        .get();
+      const count = snapshot.data().count;
+      if (count >= limits.maxTasksPerList) {
+        res.status(403).json({
+          error: "Task limit per list reached",
+          code: "LIMIT_EXCEEDED",
+          limit: limits.maxTasksPerList,
+          current: count,
+          upgrade: true,
+        });
+        return;
+      }
+    }
+
     const taskData: Omit<TaskDoc, "id"> = {
       ...req.body,
       completed: false,

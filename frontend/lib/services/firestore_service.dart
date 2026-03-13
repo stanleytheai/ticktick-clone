@@ -347,4 +347,17 @@ class FirestoreService {
     batch.delete(_settingsRef(userId));
     await batch.commit();
   }
+
+  // Ensure user profile doc exists with default free tier
+  Future<void> ensureUserProfile(String userId) async {
+    final userDoc = _db.collection('users').doc(userId);
+    final snap = await userDoc.get();
+    if (!snap.exists) {
+      await userDoc.set({
+        'subscriptionTier': 'free',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
 }

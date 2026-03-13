@@ -11,24 +11,27 @@ import statisticsRouter from "./statistics";
 import accountRouter from "./account";
 import settingsRouter from "./settings";
 import notesRouter from "./notes";
+import subscriptionRouter from "./subscription";
 import { authMiddleware } from "../middleware/auth";
+import { loadSubscription } from "../middleware/subscription";
 
 const router = Router();
 
 // Public routes
 router.use("/health", healthRouter);
 
-// Protected routes (require Firebase Auth)
-router.use("/tasks", authMiddleware, tasksRouter);
+// Protected routes (require Firebase Auth + subscription loading)
+router.use("/tasks", authMiddleware, loadSubscription, tasksRouter);
 router.use("/tasks/:id/subtasks", authMiddleware, subtasksRouter);
-router.use("/lists", authMiddleware, listsRouter);
+router.use("/lists", authMiddleware, loadSubscription, listsRouter);
 router.use("/tags", authMiddleware, tagsRouter);
-router.use("/habits", authMiddleware, habitsRouter);
+router.use("/habits", authMiddleware, loadSubscription, habitsRouter);
 router.use("/pomodoro", authMiddleware, pomodoroRouter);
 router.use("/filters", authMiddleware, filtersRouter);
 router.use("/statistics", authMiddleware, statisticsRouter);
 router.use("/account", authMiddleware, accountRouter);
 router.use("/settings", authMiddleware, settingsRouter);
 router.use("/notes", authMiddleware, notesRouter);
+router.use("/subscription", authMiddleware, loadSubscription, subscriptionRouter);
 
 export default router;

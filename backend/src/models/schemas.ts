@@ -365,3 +365,48 @@ export interface NoteDoc {
   createdAt: string;
   updatedAt: string;
 }
+
+// Subscription tier
+export const SubscriptionTierEnum = z.enum(["free", "premium"]);
+export type SubscriptionTier = z.infer<typeof SubscriptionTierEnum>;
+
+export const SubscriptionStatusEnum = z.enum([
+  "active",
+  "canceled",
+  "past_due",
+  "expired",
+]);
+export type SubscriptionStatus = z.infer<typeof SubscriptionStatusEnum>;
+
+export interface UserDoc {
+  id: string;
+  email?: string;
+  displayName?: string;
+  subscriptionTier: SubscriptionTier;
+  subscriptionStatus?: SubscriptionStatus;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Free tier limits
+export const FREE_TIER_LIMITS = {
+  maxLists: 9,
+  maxTasksPerList: 19,
+  maxRemindersPerTask: 2,
+  maxHabits: 5,
+  maxMembersPerList: 1,
+  maxCalendarSubscriptions: 1,
+} as const;
+
+export const PREMIUM_TIER_LIMITS = {
+  maxLists: Infinity,
+  maxTasksPerList: Infinity,
+  maxRemindersPerTask: 5,
+  maxHabits: Infinity,
+  maxMembersPerList: 29,
+  maxCalendarSubscriptions: Infinity,
+} as const;

@@ -3,11 +3,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ticktick_clone/models/habit.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/habit_provider.dart';
+import 'package:ticktick_clone/providers/subscription_provider.dart';
 import 'package:ticktick_clone/screens/habits/habit_edit_screen.dart';
 import 'package:ticktick_clone/screens/habits/habit_detail_screen.dart';
+import 'package:ticktick_clone/widgets/upgrade_prompt.dart';
 
 class HabitsScreen extends ConsumerWidget {
   const HabitsScreen({super.key});
+
+  void _addHabit(BuildContext context, WidgetRef ref) {
+    final limits = ref.read(tierLimitsProvider);
+    final habits = ref.read(habitsStreamProvider).value ?? [];
+    if (limits.maxHabits != null && habits.length >= limits.maxHabits!) {
+      UpgradePromptDialog.show(
+        context,
+        feature: 'habits',
+        currentCount: habits.length,
+        limit: limits.maxHabits!,
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HabitEditScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,10 +43,7 @@ class HabitsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const HabitEditScreen()),
-            ),
+            onPressed: () => _addHabit(context, ref),
           ),
         ],
       ),
@@ -47,11 +64,7 @@ class HabitsScreen extends ConsumerWidget {
                           color: theme.colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 8),
                   FilledButton.tonalIcon(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const HabitEditScreen()),
-                    ),
+                    onPressed: () => _addHabit(context, ref),
                     icon: const Icon(Icons.add),
                     label: const Text('Add Habit'),
                   ),

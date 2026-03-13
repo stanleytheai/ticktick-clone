@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../config/firebase";
 import { getUid } from "../middleware/auth";
+import { getTierLimits } from "../middleware/subscription";
 import { validate } from "../middleware/validate";
 import {
   CreateHabitSchema,
@@ -36,6 +37,26 @@ router.post("/", validate(CreateHabitSchema), async (req: Request, res: Response
   const uid = getUid(res);
   const now = new Date().toISOString();
   try {
+    // Enforce habit count limit
+    const limits = getTierLimits(res);
+    if (limits.maxHabits !== Infinity) {
+      const snapshot = await habitsCollection(uid)
+        .where("archived", "==", false)
+        .count()
+        .get();
+      const count = snapshot.data().count;
+      if (count >= limits.maxHabits) {
+        res.status(403).json({
+          error: "Habit limit reached",
+          code: "LIMIT_EXCEEDED",
+          limit: limits.maxHabits,
+          current: count,
+          upgrade: true,
+        });
+        return;
+      }
+    }
+
     const habitData: Omit<HabitDoc, "id"> = {
       ...req.body,
       archived: false,
