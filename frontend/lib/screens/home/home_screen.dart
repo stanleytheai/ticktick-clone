@@ -5,6 +5,7 @@ import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
+import 'package:ticktick_clone/screens/habits/habits_screen.dart';
 import 'package:ticktick_clone/screens/settings/settings_screen.dart';
 import 'package:ticktick_clone/widgets/quick_add_dialog.dart';
 import 'package:ticktick_clone/providers/task_provider.dart';
@@ -29,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
       const CalendarScreen(),
       const TaskListScreen(listId: 'inbox', title: 'Inbox'),
       const ListsScreen(),
+      const HabitsScreen(),
       const SettingsScreen(),
     ];
 
@@ -62,6 +64,10 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(Icons.list_outlined),
               selectedIcon: Icon(Icons.list),
               label: 'Lists'),
+          NavigationDestination(
+              icon: Icon(Icons.repeat_outlined),
+              selectedIcon: Icon(Icons.repeat),
+              label: 'Habits'),
           NavigationDestination(
               icon: Icon(Icons.settings_outlined),
               selectedIcon: Icon(Icons.settings),

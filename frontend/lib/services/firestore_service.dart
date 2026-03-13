@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ticktick_clone/models/habit.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/models/task_list.dart';
 
@@ -63,6 +64,65 @@ class FirestoreService {
     }
     batch.delete(_listsRef(userId).doc(listId));
     await batch.commit();
+  }
+
+  // Habits
+  CollectionReference<Map<String, dynamic>> _habitsRef(String userId) =>
+      _db.collection('users').doc(userId).collection('habits');
+
+  CollectionReference<Map<String, dynamic>> _habitLogsRef(
+          String userId, String habitId) =>
+      _habitsRef(userId).doc(habitId).collection('logs');
+
+  Stream<List<Habit>> watchHabits(String userId) {
+    return _habitsRef(userId)
+        .where('archived', isEqualTo: false)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Habit.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addHabit(String userId, Habit habit) {
+    return _habitsRef(userId).doc(habit.id).set(habit.toMap());
+  }
+
+  Future<void> updateHabit(String userId, Habit habit) {
+    return _habitsRef(userId).doc(habit.id).update(habit.toMap());
+  }
+
+  Future<void> deleteHabit(String userId, String habitId) async {
+    final logs = await _habitLogsRef(userId, habitId).get();
+    final batch = _db.batch();
+    for (final doc in logs.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_habitsRef(userId).doc(habitId));
+    await batch.commit();
+  }
+
+  Stream<List<HabitLog>> watchHabitLogs(String userId, String habitId) {
+    return _habitLogsRef(userId, habitId)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => HabitLog.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> logHabit(
+      String userId, String habitId, String date, int value,
+      {bool skipped = false}) {
+    return _habitLogsRef(userId, habitId).doc(date).set({
+      'date': date,
+      'value': value,
+      'skipped': skipped,
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> deleteHabitLog(
+      String userId, String habitId, String date) {
+    return _habitLogsRef(userId, habitId).doc(date).delete();
   }
 
   // Create default Inbox list for new users

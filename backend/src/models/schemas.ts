@@ -130,3 +130,59 @@ export interface TagDoc {
   createdAt: string;
   updatedAt: string;
 }
+
+// Habit schemas
+export const FrequencyEnum = z.enum(["daily", "weekly", "monthly"]);
+export type Frequency = z.infer<typeof FrequencyEnum>;
+
+export const GoalTypeEnum = z.enum(["yes_no", "count"]);
+export type GoalType = z.infer<typeof GoalTypeEnum>;
+
+export const SectionEnum = z.enum(["morning", "afternoon", "evening", "anytime"]);
+export type Section = z.infer<typeof SectionEnum>;
+
+export const CreateHabitSchema = z.object({
+  name: z.string().min(1).max(200),
+  icon: z.string().max(50).optional(),
+  frequency: FrequencyEnum.default("daily"),
+  frequencyDays: z.array(z.number().int().min(0).max(6)).optional(),
+  frequencyCount: z.number().int().min(1).optional(),
+  goalType: GoalTypeEnum.default("yes_no"),
+  goalCount: z.number().int().min(1).optional(),
+  reminderTime: z.string().optional(),
+  section: SectionEnum.default("anytime"),
+  sortOrder: z.number().default(0),
+});
+
+export const UpdateHabitSchema = CreateHabitSchema.partial();
+
+export const CreateHabitLogSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  value: z.number().default(1),
+  skipped: z.boolean().default(false),
+});
+
+export interface HabitDoc {
+  id: string;
+  name: string;
+  icon?: string;
+  frequency: Frequency;
+  frequencyDays?: number[];
+  frequencyCount?: number;
+  goalType: GoalType;
+  goalCount?: number;
+  reminderTime?: string;
+  section: Section;
+  sortOrder: number;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HabitLogDoc {
+  id: string;
+  date: string;
+  value: number;
+  skipped: boolean;
+  createdAt: string;
+}
