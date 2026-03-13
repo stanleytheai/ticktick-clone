@@ -111,6 +111,28 @@ export const PomodoroStatsQuerySchema = z.object({
   date: z.string().datetime().optional(),
 });
 
+// User profile schemas
+export const UpdateProfileSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  photoURL: z.string().url().optional(),
+});
+
+// User settings schemas
+export const UserSettingsSchema = z.object({
+  theme: z.enum(["light", "dark", "system"]).default("system"),
+  fontSize: z.enum(["small", "medium", "large"]).default("medium"),
+  defaultListId: z.string().optional(),
+  defaultReminderMinutes: z.number().int().min(0).max(10080).default(0), // 0 = no reminder, max 1 week
+  weekStartDay: z.number().int().min(0).max(1).default(0), // 0=Sunday, 1=Monday
+  dateFormat: z.enum(["MMM d, yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy"]).default("MMM d, yyyy"),
+  timeFormat: z.enum(["12h", "24h"]).default("12h"),
+  language: z.enum(["en", "es", "fr", "de", "ja", "zh", "pt", "ko"]).default("en"),
+  soundEnabled: z.boolean().default(true),
+  notificationsEnabled: z.boolean().default(true),
+});
+
+export const UpdateUserSettingsSchema = UserSettingsSchema.partial();
+
 // Firestore document types
 export interface PomodoroSessionDoc {
   id: string;
@@ -122,6 +144,20 @@ export interface PomodoroSessionDoc {
   completed: boolean;
   ambientSounds: string[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSettingsDoc {
+  theme: string;
+  fontSize: string;
+  defaultListId?: string;
+  defaultReminderMinutes: number;
+  weekStartDay: number;
+  dateFormat: string;
+  timeFormat: string;
+  language: string;
+  soundEnabled: boolean;
+  notificationsEnabled: boolean;
   updatedAt: string;
 }
 
