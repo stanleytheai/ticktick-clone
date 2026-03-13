@@ -51,6 +51,21 @@ export const BatchTaskSchema = z.object({
   tasks: z.array(CreateTaskSchema).min(1).max(100),
 });
 
+export const ReorderTaskSchema = z.object({
+  tasks: z.array(z.object({
+    id: z.string(),
+    sortOrder: z.number(),
+    listId: z.string().optional(),
+  })).min(1).max(500),
+});
+
+export const ReorderListSchema = z.object({
+  lists: z.array(z.object({
+    id: z.string(),
+    sortOrder: z.number(),
+  })).min(1).max(100),
+});
+
 // Subtask schemas
 export const CreateSubtaskSchema = z.object({
   title: z.string().min(1).max(500),

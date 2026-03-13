@@ -38,6 +38,19 @@ class FirestoreService {
     return _tasksRef(userId).doc(taskId).delete();
   }
 
+  Future<void> batchUpdateTaskSortOrders(
+      String userId, List<Task> tasks) async {
+    final batch = _db.batch();
+    for (final task in tasks) {
+      batch.update(_tasksRef(userId).doc(task.id), {
+        'sortOrder': task.sortOrder,
+        'listId': task.listId,
+        'updatedAt': Timestamp.fromDate(task.updatedAt),
+      });
+    }
+    await batch.commit();
+  }
+
   // Lists
   CollectionReference<Map<String, dynamic>> _listsRef(String userId) =>
       _db.collection('users').doc(userId).collection('lists');
@@ -56,6 +69,17 @@ class FirestoreService {
 
   Future<void> updateList(String userId, TaskList list) {
     return _listsRef(userId).doc(list.id).update(list.toMap());
+  }
+
+  Future<void> batchUpdateListSortOrders(
+      String userId, List<TaskList> lists) async {
+    final batch = _db.batch();
+    for (final list in lists) {
+      batch.update(_listsRef(userId).doc(list.id), {
+        'sortOrder': list.sortOrder,
+      });
+    }
+    await batch.commit();
   }
 
   Future<void> deleteList(String userId, String listId) async {

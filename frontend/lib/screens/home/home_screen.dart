@@ -7,6 +7,7 @@ import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/eisenhower/eisenhower_screen.dart';
 import 'package:ticktick_clone/screens/filters/filter_builder_screen.dart';
 import 'package:ticktick_clone/screens/filters/smart_list_screen.dart';
+import 'package:ticktick_clone/screens/kanban/kanban_screen.dart';
 import 'package:ticktick_clone/screens/pomodoro/pomodoro_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
@@ -38,6 +39,7 @@ class HomeScreen extends ConsumerWidget {
       const CalendarScreen(),
       const PomodoroScreen(),
       const EisenhowerScreen(),
+      const KanbanScreen(),
       const TaskListScreen(listId: 'inbox', title: 'Inbox'),
       const ListsScreen(),
       const HabitsScreen(),
@@ -76,6 +78,10 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(Icons.grid_view_outlined),
               selectedIcon: Icon(Icons.grid_view),
               label: 'Matrix'),
+          NavigationDestination(
+              icon: Icon(Icons.view_kanban_outlined),
+              selectedIcon: Icon(Icons.view_kanban),
+              label: 'Kanban'),
           NavigationDestination(
               icon: Icon(Icons.inbox_outlined),
               selectedIcon: Icon(Icons.inbox),

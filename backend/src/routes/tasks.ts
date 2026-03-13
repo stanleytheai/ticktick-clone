@@ -7,6 +7,7 @@ import {
   CreateTaskSchema,
   UpdateTaskSchema,
   BatchTaskSchema,
+  ReorderTaskSchema,
   TaskDoc,
 } from "../models/schemas";
 import {
@@ -112,6 +113,30 @@ router.post("/parse", async (req: Request, res: Response) => {
     res.json(parsed);
   } catch {
     res.status(500).json({ error: "Failed to parse task input" });
+  }
+});
+
+// PATCH /tasks/reorder — batch update sortOrder (and optionally listId) for tasks
+router.patch("/reorder", validate(ReorderTaskSchema), async (req: Request, res: Response) => {
+  const uid = getUid(res);
+  const now = new Date().toISOString();
+  try {
+    const batch = db.batch();
+    for (const item of req.body.tasks) {
+      const docRef = tasksCollection(uid).doc(item.id);
+      const updateData: Record<string, unknown> = {
+        sortOrder: item.sortOrder,
+        updatedAt: now,
+      };
+      if (item.listId !== undefined) {
+        updateData.listId = item.listId;
+      }
+      batch.update(docRef, updateData);
+    }
+    await batch.commit();
+    res.json({ updated: req.body.tasks.length });
+  } catch {
+    res.status(500).json({ error: "Failed to reorder tasks" });
   }
 });
 

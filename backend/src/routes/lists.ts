@@ -3,7 +3,7 @@ import { db } from "../config/firebase";
 import { getUid } from "../middleware/auth";
 import { getTierLimits } from "../middleware/subscription";
 import { validate } from "../middleware/validate";
-import { CreateListSchema, UpdateListSchema } from "../models/schemas";
+import { CreateListSchema, UpdateListSchema, ReorderListSchema } from "../models/schemas";
 
 const router = Router();
 
@@ -55,6 +55,25 @@ router.post("/", validate(CreateListSchema), async (req: Request, res: Response)
     res.status(201).json({ id: docRef.id, ...listData });
   } catch {
     res.status(500).json({ error: "Failed to create list" });
+  }
+});
+
+// PATCH /lists/reorder — batch update sortOrder for lists
+router.patch("/reorder", validate(ReorderListSchema), async (req: Request, res: Response) => {
+  const uid = getUid(res);
+  try {
+    const batch = db.batch();
+    for (const item of req.body.lists) {
+      const docRef = listsCollection(uid).doc(item.id);
+      batch.update(docRef, {
+        sortOrder: item.sortOrder,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    await batch.commit();
+    res.json({ updated: req.body.lists.length });
+  } catch {
+    res.status(500).json({ error: "Failed to reorder lists" });
   }
 });
 

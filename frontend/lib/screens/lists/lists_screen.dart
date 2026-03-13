@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:ticktick_clone/models/task_list.dart';
+import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/list_provider.dart';
 import 'package:ticktick_clone/providers/subscription_provider.dart';
@@ -52,49 +53,7 @@ class ListsScreen extends ConsumerWidget {
               ),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: lists.length,
-            itemBuilder: (context, index) {
-              final list = lists[index];
-              final taskCount = ref
-                  .watch(tasksByListProvider(list.id))
-                  .where((t) => !t.isCompleted)
-                  .length;
-              return ListTile(
-                leading: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Color(list.colorValue).withAlpha(30),
-                    shape: BoxShape.circle,
-                  ),
-                  child:
-                      Icon(Icons.list, color: Color(list.colorValue), size: 18),
-                ),
-                title: Text(list.name),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (taskCount > 0)
-                      Text('$taskCount',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right),
-                  ],
-                ),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        TaskListScreen(listId: list.id, title: list.name),
-                  ),
-                ),
-                onLongPress: () => _showEditDialog(context, ref, list),
-              );
-            },
-          );
+          return _ReorderableListsList(lists: lists);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -166,6 +125,128 @@ class ListsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ReorderableListsList extends ConsumerWidget {
+  final List<TaskList> lists;
+
+  const _ReorderableListsList({required this.lists});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: lists.length,
+      onReorder: (oldIndex, newIndex) {
+        if (user == null) return;
+        if (oldIndex < newIndex) newIndex -= 1;
+
+        final reordered = List<TaskList>.from(lists);
+        final item = reordered.removeAt(oldIndex);
+        reordered.insert(newIndex, item);
+
+        final updated = <TaskList>[];
+        for (var i = 0; i < reordered.length; i++) {
+          if (reordered[i].sortOrder != i) {
+            updated.add(reordered[i].copyWith(sortOrder: i));
+          }
+        }
+        if (updated.isNotEmpty) {
+          ref
+              .read(firestoreServiceProvider)
+              .batchUpdateListSortOrders(user.uid, updated);
+        }
+      },
+      proxyDecorator: (child, index, animation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) => Material(
+            elevation: 4 * animation.value,
+            borderRadius: BorderRadius.circular(8),
+            child: child,
+          ),
+          child: child,
+        );
+      },
+      itemBuilder: (context, index) {
+        final list = lists[index];
+        return _ListTileItem(key: ValueKey(list.id), list: list);
+      },
+    );
+  }
+}
+
+class _ListTileItem extends ConsumerWidget {
+  final TaskList list;
+
+  const _ListTileItem({super.key, required this.list});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final taskCount = ref
+        .watch(tasksByListProvider(list.id))
+        .where((t) => !t.isCompleted)
+        .length;
+
+    return DragTarget<Task>(
+      onAcceptWithDetails: (details) {
+        final user = ref.read(currentUserProvider);
+        if (user == null) return;
+        final task = details.data;
+        if (task.listId == list.id) return;
+        ref.read(firestoreServiceProvider).updateTask(
+              user.uid,
+              task.copyWith(listId: list.id, updatedAt: DateTime.now()),
+            );
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isHovering = candidateData.isNotEmpty;
+        return Container(
+          color: isHovering
+              ? Color(list.colorValue).withAlpha(20)
+              : null,
+          child: ListTile(
+            leading: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Color(list.colorValue).withAlpha(30),
+                shape: BoxShape.circle,
+              ),
+              child:
+                  Icon(Icons.list, color: Color(list.colorValue), size: 18),
+            ),
+            title: Text(list.name),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (taskCount > 0)
+                  Text('$taskCount',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant)),
+                const SizedBox(width: 8),
+                Icon(Icons.drag_handle,
+                    size: 20, color: theme.colorScheme.outline),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    TaskListScreen(listId: list.id, title: list.name),
+              ),
+            ),
+            onLongPress: () => _showEditDialog(context, ref, list),
+          ),
+        );
+      },
     );
   }
 
