@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ticktick_clone/models/focus_session.dart';
 import 'package:ticktick_clone/models/habit.dart';
 import 'package:ticktick_clone/models/pomodoro_session.dart';
 import 'package:ticktick_clone/models/smart_filter.dart';
@@ -66,6 +67,22 @@ class FirestoreService {
     }
     batch.delete(_listsRef(userId).doc(listId));
     await batch.commit();
+  }
+
+  // Focus Sessions
+  CollectionReference<Map<String, dynamic>> _focusSessionsRef(String userId) =>
+      _db.collection('users').doc(userId).collection('focusSessions');
+
+  Stream<List<FocusSession>> watchFocusSessions(String userId) {
+    return _focusSessionsRef(userId)
+        .orderBy('startTime', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => FocusSession.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addFocusSession(String userId, FocusSession session) {
+    return _focusSessionsRef(userId).doc(session.id).set(session.toMap());
   }
 
   // Habits

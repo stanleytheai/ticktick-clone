@@ -119,7 +119,11 @@ class _SwipeableTaskTile extends ConsumerWidget {
         if (direction == DismissDirection.startToEnd) {
           await ref.read(firestoreServiceProvider).updateTask(
                 user.uid,
-                task.copyWith(isCompleted: true, updatedAt: DateTime.now()),
+                task.copyWith(
+                  isCompleted: true,
+                  completedAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
               );
         } else {
           await ref
@@ -133,10 +137,15 @@ class _SwipeableTaskTile extends ConsumerWidget {
           value: task.isCompleted,
           onChanged: (v) {
             if (user == null) return;
+            final completing = v ?? false;
             ref.read(firestoreServiceProvider).updateTask(
                   user.uid,
                   task.copyWith(
-                      isCompleted: v ?? false, updatedAt: DateTime.now()),
+                    isCompleted: completing,
+                    completedAt: completing ? DateTime.now() : null,
+                    clearCompletedAt: !completing,
+                    updatedAt: DateTime.now(),
+                  ),
                 );
           },
         ),

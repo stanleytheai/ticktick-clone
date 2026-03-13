@@ -30,6 +30,7 @@ class Task {
   final List<String> tags;
   final List<Subtask> subtasks;
   final bool isCompleted;
+  final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String userId;
@@ -45,6 +46,7 @@ class Task {
     this.tags = const [],
     this.subtasks = const [],
     this.isCompleted = false,
+    this.completedAt,
     required this.createdAt,
     required this.updatedAt,
     required this.userId,
@@ -62,6 +64,8 @@ class Task {
     List<String>? tags,
     List<Subtask>? subtasks,
     bool? isCompleted,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? userId,
@@ -77,6 +81,7 @@ class Task {
       tags: tags ?? this.tags,
       subtasks: subtasks ?? this.subtasks,
       isCompleted: isCompleted ?? this.isCompleted,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId ?? this.userId,
@@ -94,6 +99,7 @@ class Task {
       'tags': tags,
       'subtasks': subtasks.map((s) => s.toMap()).toList(),
       'isCompleted': isCompleted,
+      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'userId': userId,
@@ -114,6 +120,7 @@ class Task {
           .map((s) => Subtask.fromMap(s as Map<String, dynamic>))
           .toList(),
       isCompleted: map['isCompleted'] as bool? ?? false,
+      completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       userId: map['userId'] as String? ?? '',
