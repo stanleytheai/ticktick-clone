@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ticktick_clone/models/activity_entry.dart';
+import 'package:ticktick_clone/models/comment.dart';
 import 'package:ticktick_clone/models/focus_session.dart';
 import 'package:ticktick_clone/models/habit.dart';
 import 'package:ticktick_clone/models/note.dart';
 import 'package:ticktick_clone/models/pomodoro_session.dart';
+import 'package:ticktick_clone/models/shared_list.dart';
 import 'package:ticktick_clone/models/smart_filter.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/models/task_list.dart';
@@ -383,5 +386,122 @@ class FirestoreService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  // ── Shared Lists ───────────────────────────────────────
+
+  CollectionReference<Map<String, dynamic>> get _sharedListsRef =>
+      _db.collection('sharedLists');
+
+  CollectionReference<Map<String, dynamic>> _sharedTasksRef(String listId) =>
+      _sharedListsRef.doc(listId).collection('tasks');
+
+  CollectionReference<Map<String, dynamic>> _commentsRef(
+          String listId, String taskId) =>
+      _sharedTasksRef(listId).doc(taskId).collection('comments');
+
+  CollectionReference<Map<String, dynamic>> _activityRef(String listId) =>
+      _sharedListsRef.doc(listId).collection('activity');
+
+  Stream<List<SharedList>> watchSharedLists(String userId) {
+    return _sharedListsRef.snapshots().map((snap) => snap.docs
+        .map((d) => SharedList.fromMap(d.id, d.data()))
+        .where((list) => list.isMember(userId))
+        .toList());
+  }
+
+  Future<void> addSharedList(SharedList list) {
+    return _sharedListsRef.doc(list.id).set(list.toMap());
+  }
+
+  Future<void> updateSharedList(String listId, Map<String, dynamic> data) {
+    return _sharedListsRef.doc(listId).update({
+      ...data,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<void> deleteSharedList(String listId) async {
+    // Delete tasks and activity
+    final tasks = await _sharedTasksRef(listId).get();
+    final activity = await _activityRef(listId).get();
+    final batch = _db.batch();
+    for (final doc in tasks.docs) {
+      batch.delete(doc.reference);
+    }
+    for (final doc in activity.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_sharedListsRef.doc(listId));
+    await batch.commit();
+  }
+
+  // Shared list tasks
+  Stream<List<Task>> watchSharedTasks(String listId) {
+    return _sharedTasksRef(listId)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Task.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addSharedTask(String listId, Task task) {
+    return _sharedTasksRef(listId).doc(task.id).set(task.toMap());
+  }
+
+  Future<void> updateSharedTask(String listId, Task task) {
+    return _sharedTasksRef(listId).doc(task.id).update(task.toMap());
+  }
+
+  Future<void> deleteSharedTask(String listId, String taskId) {
+    return _sharedTasksRef(listId).doc(taskId).delete();
+  }
+
+  Future<void> assignSharedTask(
+      String listId, String taskId, String? assigneeId) {
+    return _sharedTasksRef(listId).doc(taskId).update({
+      'assigneeId': assigneeId,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  // Comments
+  Stream<List<Comment>> watchComments(String listId, String taskId) {
+    return _commentsRef(listId, taskId)
+        .orderBy('createdAt')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Comment.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addComment(String listId, String taskId, Comment comment) {
+    return _commentsRef(listId, taskId).doc(comment.id).set(comment.toMap());
+  }
+
+  Future<void> deleteComment(
+      String listId, String taskId, String commentId) {
+    return _commentsRef(listId, taskId).doc(commentId).delete();
+  }
+
+  // Activity feed
+  Stream<List<ActivityEntry>> watchActivity(String listId) {
+    return _activityRef(listId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => ActivityEntry.fromMap(d.id, d.data()))
+            .toList());
+  }
+
+  Future<void> addActivity(String listId, ActivityEntry entry) {
+    return _activityRef(listId).add({
+      'type': entry.type,
+      'actorId': entry.actorId,
+      'actorName': entry.actorName,
+      'description': entry.description,
+      'metadata': entry.metadata,
+      'createdAt': Timestamp.fromDate(entry.createdAt),
+    });
   }
 }

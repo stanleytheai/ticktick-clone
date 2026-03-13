@@ -5,8 +5,10 @@ import 'package:ticktick_clone/models/task_list.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/list_provider.dart';
+import 'package:ticktick_clone/providers/shared_list_provider.dart';
 import 'package:ticktick_clone/providers/subscription_provider.dart';
 import 'package:ticktick_clone/providers/task_provider.dart';
+import 'package:ticktick_clone/screens/collaboration/shared_list_tasks_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/widgets/upgrade_prompt.dart';
 
@@ -16,6 +18,7 @@ class ListsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listsAsync = ref.watch(listsStreamProvider);
+    final sharedListsAsync = ref.watch(sharedListsStreamProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -32,7 +35,8 @@ class ListsScreen extends ConsumerWidget {
       ),
       body: listsAsync.when(
         data: (lists) {
-          if (lists.isEmpty) {
+          final sharedLists = sharedListsAsync.value ?? [];
+          if (lists.isEmpty && sharedLists.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -53,7 +57,58 @@ class ListsScreen extends ConsumerWidget {
               ),
             );
           }
-          return _ReorderableListsList(lists: lists);
+          return ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: [
+              _ReorderableListsList(lists: lists),
+
+              // Shared lists
+              if (sharedLists.isNotEmpty) ...[
+                const Divider(),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.people,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text('Shared Lists',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                              color:
+                                  theme.colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+                ...sharedLists.map((sharedList) => ListTile(
+                      leading: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Color(sharedList.colorValue).withAlpha(30),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.people,
+                            color: Color(sharedList.colorValue), size: 18),
+                      ),
+                      title: Text(sharedList.name),
+                      subtitle: Text(
+                        '${sharedList.members.length} members',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SharedListTasksScreen(
+                              listId: sharedList.id),
+                        ),
+                      ),
+                    )),
+              ],
+            ],
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

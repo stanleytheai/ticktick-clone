@@ -35,6 +35,7 @@ class Task {
   final DateTime updatedAt;
   final String userId;
   final int sortOrder;
+  final String? assigneeId;
 
   const Task({
     required this.id,
@@ -51,6 +52,7 @@ class Task {
     required this.updatedAt,
     required this.userId,
     this.sortOrder = 0,
+    this.assigneeId,
   });
 
   Task copyWith({
@@ -70,6 +72,8 @@ class Task {
     DateTime? updatedAt,
     String? userId,
     int? sortOrder,
+    String? assigneeId,
+    bool clearAssignee = false,
   }) {
     return Task(
       id: id ?? this.id,
@@ -86,6 +90,7 @@ class Task {
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId ?? this.userId,
       sortOrder: sortOrder ?? this.sortOrder,
+      assigneeId: clearAssignee ? null : (assigneeId ?? this.assigneeId),
     );
   }
 
@@ -104,6 +109,7 @@ class Task {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'userId': userId,
       'sortOrder': sortOrder,
+      if (assigneeId != null) 'assigneeId': assigneeId,
     };
   }
 
@@ -125,6 +131,7 @@ class Task {
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       userId: map['userId'] as String? ?? '',
       sortOrder: map['sortOrder'] as int? ?? 0,
+      assigneeId: map['assigneeId'] as String?,
     );
   }
 }
