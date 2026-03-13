@@ -5,6 +5,7 @@ import 'package:ticktick_clone/models/pomodoro_session.dart';
 import 'package:ticktick_clone/models/smart_filter.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/models/task_list.dart';
+import 'package:ticktick_clone/models/user_settings.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -229,5 +230,60 @@ class FirestoreService {
       );
       await addList(userId, inbox);
     }
+  }
+
+  // Settings
+  DocumentReference<Map<String, dynamic>> _settingsRef(String userId) =>
+      _db.collection('users').doc(userId).collection('settings').doc('preferences');
+
+  Stream<UserSettings> watchSettings(String userId) {
+    return _settingsRef(userId).snapshots().map((snap) {
+      if (!snap.exists || snap.data() == null) {
+        return UserSettings.defaultSettings;
+      }
+      return UserSettings.fromMap(snap.data()!);
+    });
+  }
+
+  Future<UserSettings> getSettings(String userId) async {
+    final snap = await _settingsRef(userId).get();
+    if (!snap.exists || snap.data() == null) {
+      return UserSettings.defaultSettings;
+    }
+    return UserSettings.fromMap(snap.data()!);
+  }
+
+  Future<void> updateSettings(String userId, UserSettings settings) {
+    return _settingsRef(userId).set(settings.toMap(), SetOptions(merge: true));
+  }
+
+  // Data export - gather all user data
+  Future<Map<String, dynamic>> exportUserData(String userId) async {
+    final tasksSnap = await _tasksRef(userId).get();
+    final listsSnap = await _listsRef(userId).get();
+
+    return {
+      'exportedAt': DateTime.now().toIso8601String(),
+      'tasks': tasksSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+      'lists': listsSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+    };
+  }
+
+  // Delete all user data (for account deletion)
+  Future<void> deleteAllUserData(String userId) async {
+    final batch = _db.batch();
+
+    final tasks = await _tasksRef(userId).get();
+    for (final doc in tasks.docs) {
+      batch.delete(doc.reference);
+    }
+
+    final lists = await _listsRef(userId).get();
+    for (final doc in lists.docs) {
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(_settingsRef(userId));
+    await batch.commit();
   }
 }

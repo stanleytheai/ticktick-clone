@@ -62,6 +62,11 @@ service cloud.firestore {
         }
       }
 
+      // ── Settings (subcollection) ─────────────────
+      match /settings/{settingId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // ── Tags (subcollection) ──────────────────────
       match /tags/{tagId} {
         allow read, write: if isOwner(uid);
