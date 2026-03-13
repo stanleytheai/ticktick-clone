@@ -6,6 +6,7 @@ import listsRouter from "./lists";
 import tagsRouter from "./tags";
 import habitsRouter from "./habits";
 import pomodoroRouter from "./pomodoro";
+import statisticsRouter from "./statistics";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.use("/lists", authMiddleware, listsRouter);
 router.use("/tags", authMiddleware, tagsRouter);
 router.use("/habits", authMiddleware, habitsRouter);
 router.use("/pomodoro", authMiddleware, pomodoroRouter);
+router.use("/statistics", authMiddleware, statisticsRouter);
 
 export default router;

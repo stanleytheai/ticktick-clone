@@ -11,6 +11,7 @@ import 'package:ticktick_clone/screens/habits/habits_screen.dart';
 import 'package:ticktick_clone/screens/settings/settings_screen.dart';
 import 'package:ticktick_clone/widgets/quick_add_dialog.dart';
 import 'package:ticktick_clone/providers/task_provider.dart';
+import 'package:ticktick_clone/screens/statistics/statistics_screen.dart';
 
 final selectedTabProvider = StateProvider<int>((ref) => 0);
 
@@ -103,6 +104,15 @@ class _TodayTab extends ConsumerWidget {
         title: Text('Today',
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded),
+            tooltip: 'Statistics',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+            ),
+          ),
+        ],
       ),
       body: todayTasks.isEmpty
           ? Center(
@@ -159,7 +169,11 @@ class _TaskTile extends ConsumerWidget {
         if (direction == DismissDirection.startToEnd) {
           await ref.read(firestoreServiceProvider).updateTask(
                 user.uid,
-                task.copyWith(isCompleted: true, updatedAt: DateTime.now()),
+                task.copyWith(
+                  isCompleted: true,
+                  completedAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
               );
         } else {
           await ref.read(firestoreServiceProvider).deleteTask(user.uid, task.id);
@@ -171,9 +185,15 @@ class _TaskTile extends ConsumerWidget {
           value: task.isCompleted,
           onChanged: (v) {
             if (user == null) return;
+            final completing = v ?? false;
             ref.read(firestoreServiceProvider).updateTask(
                   user.uid,
-                  task.copyWith(isCompleted: v ?? false, updatedAt: DateTime.now()),
+                  task.copyWith(
+                    isCompleted: completing,
+                    completedAt: completing ? DateTime.now() : null,
+                    clearCompletedAt: !completing,
+                    updatedAt: DateTime.now(),
+                  ),
                 );
           },
         ),
