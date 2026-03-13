@@ -191,7 +191,6 @@ class ListsScreen extends ConsumerWidget {
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete'),
             ),
-            const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancel'),
