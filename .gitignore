@@ -2,3 +2,5 @@
 .claude/commands/
 .logs/
 .beads/
+node_modules/
+dist/

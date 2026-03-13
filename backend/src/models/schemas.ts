@@ -4,6 +4,33 @@ import { z } from "zod";
 export const PriorityEnum = z.enum(["none", "low", "medium", "high"]);
 export type Priority = z.infer<typeof PriorityEnum>;
 
+// Recurrence frequency
+export const RecurrenceFrequencyEnum = z.enum([
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+]);
+export type RecurrenceFrequency = z.infer<typeof RecurrenceFrequencyEnum>;
+
+// Recurrence rule (rrule-like config stored on task document)
+export const RecurrenceRuleSchema = z.object({
+  frequency: RecurrenceFrequencyEnum,
+  interval: z.number().int().min(1).max(999).default(1),
+  daysOfWeek: z
+    .array(z.number().int().min(0).max(6))
+    .min(1)
+    .max(7)
+    .optional(), // 0=Sun..6=Sat, for weekly
+  dayOfMonth: z.number().int().min(1).max(31).optional(), // for monthly
+  monthOfYear: z.number().int().min(1).max(12).optional(), // for yearly
+  endDate: z.string().datetime().optional(), // stop recurring after this date
+  endAfterCount: z.number().int().min(1).max(999).optional(), // stop after N occurrences
+  afterCompletion: z.boolean().default(false), // next date relative to completion, not due date
+});
+
+export type RecurrenceRule = z.infer<typeof RecurrenceRuleSchema>;
+
 // Task schemas
 export const CreateTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -15,6 +42,7 @@ export const CreateTaskSchema = z.object({
   tags: z.array(z.string()).default([]),
   listId: z.string().optional(),
   sortOrder: z.number().default(0),
+  recurrence: RecurrenceRuleSchema.optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
@@ -66,6 +94,9 @@ export interface TaskDoc {
   completed: boolean;
   completedAt?: string;
   sortOrder: number;
+  recurrence?: RecurrenceRule;
+  recurrenceSourceId?: string; // links to the original recurring task
+  recurrenceCount?: number; // how many occurrences have been created
   createdAt: string;
   updatedAt: string;
 }

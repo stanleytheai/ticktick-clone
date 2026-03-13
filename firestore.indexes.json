@@ -42,6 +42,15 @@
         { "fieldPath": "dueDate", "order": "ASCENDING" }
       ]
     }
+    ,
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recurrenceSourceId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }
