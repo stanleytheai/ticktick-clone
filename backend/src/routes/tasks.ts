@@ -12,6 +12,7 @@ import {
   calculateNextDueDate,
   shouldCreateNextOccurrence,
 } from "../services/recurrence";
+import { parseTaskInput } from "../services/nlp-parser";
 
 const router = Router();
 
@@ -73,6 +74,21 @@ router.post("/batch", validate(BatchTaskSchema), async (req: Request, res: Respo
     res.status(201).json({ tasks: results });
   } catch {
     res.status(500).json({ error: "Failed to create tasks" });
+  }
+});
+
+// POST /tasks/parse — parse natural language task input
+router.post("/parse", async (req: Request, res: Response) => {
+  try {
+    const { text } = req.body;
+    if (typeof text !== "string") {
+      res.status(400).json({ error: "Missing 'text' field" });
+      return;
+    }
+    const parsed = parseTaskInput(text);
+    res.json(parsed);
+  } catch {
+    res.status(500).json({ error: "Failed to parse task input" });
   }
 });
 
