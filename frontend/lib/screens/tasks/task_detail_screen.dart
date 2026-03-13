@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:ticktick_clone/models/task.dart';
@@ -22,6 +23,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _descriptionController;
   final _subtaskController = TextEditingController();
   bool _initialized = false;
+  bool _descriptionPreview = false;
 
   @override
   void dispose() {
@@ -210,18 +212,45 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
           const Divider(),
 
-          // Description
+          // Description with markdown support
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _descriptionController,
-              maxLines: null,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Add description...',
-              ),
-              onChanged: (v) => _saveTask(task.copyWith(description: v)),
+            child: Row(
+              children: [
+                Text('Description', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    _descriptionPreview ? Icons.edit : Icons.visibility,
+                    size: 20,
+                  ),
+                  tooltip: _descriptionPreview ? 'Edit' : 'Preview markdown',
+                  onPressed: () =>
+                      setState(() => _descriptionPreview = !_descriptionPreview),
+                ),
+              ],
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _descriptionPreview
+                ? _descriptionController.text.trim().isEmpty
+                    ? Text('No description',
+                        style: TextStyle(color: theme.colorScheme.outline))
+                    : MarkdownBody(
+                        data: _descriptionController.text,
+                        selectable: true,
+                      )
+                : TextField(
+                    controller: _descriptionController,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Add description... (supports Markdown)',
+                    ),
+                    onChanged: (v) =>
+                        _saveTask(task.copyWith(description: v)),
+                  ),
           ),
 
           const Divider(),

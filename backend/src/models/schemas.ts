@@ -327,3 +327,41 @@ export interface FilterDoc {
   createdAt: string;
   updatedAt: string;
 }
+
+// Note folder schemas
+export const CreateNoteFolderSchema = z.object({
+  name: z.string().min(1).max(200),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  sortOrder: z.number().default(0),
+});
+
+export const UpdateNoteFolderSchema = CreateNoteFolderSchema.partial();
+
+export interface NoteFolderDoc {
+  id: string;
+  name: string;
+  color?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Note schemas
+export const CreateNoteSchema = z.object({
+  title: z.string().min(1).max(500),
+  content: z.string().max(50000).default(""),
+  folderId: z.string().optional(),
+  sortOrder: z.number().default(0),
+});
+
+export const UpdateNoteSchema = CreateNoteSchema.partial();
+
+export interface NoteDoc {
+  id: string;
+  title: string;
+  content: string;
+  folderId?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}

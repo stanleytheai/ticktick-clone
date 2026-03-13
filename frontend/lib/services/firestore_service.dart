@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ticktick_clone/models/focus_session.dart';
 import 'package:ticktick_clone/models/habit.dart';
+import 'package:ticktick_clone/models/note.dart';
 import 'package:ticktick_clone/models/pomodoro_session.dart';
 import 'package:ticktick_clone/models/smart_filter.dart';
 import 'package:ticktick_clone/models/task.dart';
@@ -214,6 +215,66 @@ class FirestoreService {
 
   Future<void> deleteFilter(String userId, String filterId) {
     return _filtersRef(userId).doc(filterId).delete();
+  }
+
+  // Notes
+  CollectionReference<Map<String, dynamic>> _notesRef(String userId) =>
+      _db.collection('users').doc(userId).collection('notes');
+
+  CollectionReference<Map<String, dynamic>> _noteFoldersRef(String userId) =>
+      _db.collection('users').doc(userId).collection('noteFolders');
+
+  Stream<List<Note>> watchNotes(String userId) {
+    return _notesRef(userId)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Note.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addNote(String userId, Note note) {
+    return _notesRef(userId).doc(note.id).set(note.toMap());
+  }
+
+  Future<void> updateNote(String userId, Note note) {
+    return _notesRef(userId).doc(note.id).update(note.toMap());
+  }
+
+  Future<void> deleteNote(String userId, String noteId) {
+    return _notesRef(userId).doc(noteId).delete();
+  }
+
+  // Note Folders
+  Stream<List<NoteFolder>> watchNoteFolders(String userId) {
+    return _noteFoldersRef(userId)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => NoteFolder.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addNoteFolder(String userId, NoteFolder folder) {
+    return _noteFoldersRef(userId).doc(folder.id).set(folder.toMap());
+  }
+
+  Future<void> updateNoteFolder(String userId, NoteFolder folder) {
+    return _noteFoldersRef(userId).doc(folder.id).update(folder.toMap());
+  }
+
+  Future<void> deleteNoteFolder(String userId, String folderId) async {
+    // Move notes in this folder to unfiled
+    final notes = await _notesRef(userId)
+        .where('folderId', isEqualTo: folderId)
+        .get();
+    final batch = _db.batch();
+    for (final doc in notes.docs) {
+      batch.update(doc.reference, {
+        'folderId': null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    batch.delete(_noteFoldersRef(userId).doc(folderId));
+    await batch.commit();
   }
 
   // Create default Inbox list for new users

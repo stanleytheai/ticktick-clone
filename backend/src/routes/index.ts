@@ -10,6 +10,7 @@ import filtersRouter from "./filters";
 import statisticsRouter from "./statistics";
 import accountRouter from "./account";
 import settingsRouter from "./settings";
+import notesRouter from "./notes";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
@@ -28,5 +29,6 @@ router.use("/filters", authMiddleware, filtersRouter);
 router.use("/statistics", authMiddleware, statisticsRouter);
 router.use("/account", authMiddleware, accountRouter);
 router.use("/settings", authMiddleware, settingsRouter);
+router.use("/notes", authMiddleware, notesRouter);
 
 export default router;

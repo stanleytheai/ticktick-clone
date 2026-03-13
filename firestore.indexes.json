@@ -49,8 +49,7 @@
         { "fieldPath": "archived", "order": "ASCENDING" },
         { "fieldPath": "sortOrder", "order": "ASCENDING" }
       ]
-    }
-    ,
+    },
     {
       "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
@@ -73,6 +72,14 @@
         { "fieldPath": "completed", "order": "ASCENDING" },
         { "fieldPath": "sessionType", "order": "ASCENDING" },
         { "fieldPath": "startTime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "folderId", "order": "ASCENDING" },
+        { "fieldPath": "sortOrder", "order": "ASCENDING" }
       ]
     }
   ],

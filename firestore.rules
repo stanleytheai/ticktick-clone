@@ -81,6 +81,24 @@ service cloud.firestore {
         }
       }
 
+      // ── Notes (subcollection) ──────────────────────
+      match /notes/{noteId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && hasRequiredFields(['title', 'createdAt']);
+        allow update: if isOwner(uid);
+        allow delete: if isOwner(uid);
+      }
+
+      // ── Note Folders (subcollection) ────────────────
+      match /noteFolders/{folderId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && hasRequiredFields(['name', 'createdAt']);
+        allow update: if isOwner(uid);
+        allow delete: if isOwner(uid);
+      }
+
       // ── Pomodoro Sessions (subcollection) ─────────
       match /pomodoroSessions/{sessionId} {
         allow read, write: if isOwner(uid);
