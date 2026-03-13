@@ -1,0 +1,28 @@
+{
+  "name": "ticktick-clone-backend",
+  "version": "1.0.0",
+  "description": "TickTick Clone Backend API - Node.js/Express/Firestore",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2",
+    "helmet": "^8.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.12.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.3"
+  }
+}
