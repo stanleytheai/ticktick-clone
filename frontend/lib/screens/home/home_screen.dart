@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
+import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
 import 'package:ticktick_clone/screens/settings/settings_screen.dart';
@@ -25,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
 
     final screens = [
       const _TodayTab(),
+      const CalendarScreen(),
       const TaskListScreen(listId: 'inbox', title: 'Inbox'),
       const ListsScreen(),
       const SettingsScreen(),
@@ -48,6 +50,10 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(Icons.today_outlined),
               selectedIcon: Icon(Icons.today),
               label: 'Today'),
+          NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined),
+              selectedIcon: Icon(Icons.calendar_month),
+              label: 'Calendar'),
           NavigationDestination(
               icon: Icon(Icons.inbox_outlined),
               selectedIcon: Icon(Icons.inbox),
