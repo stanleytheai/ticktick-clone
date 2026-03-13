@@ -12,6 +12,7 @@ import accountRouter from "./account";
 import settingsRouter from "./settings";
 import notesRouter from "./notes";
 import subscriptionRouter from "./subscription";
+import sharingRouter from "./sharing";
 import { authMiddleware } from "../middleware/auth";
 import { loadSubscription } from "../middleware/subscription";
 
@@ -33,5 +34,6 @@ router.use("/account", authMiddleware, accountRouter);
 router.use("/settings", authMiddleware, settingsRouter);
 router.use("/notes", authMiddleware, notesRouter);
 router.use("/subscription", authMiddleware, loadSubscription, subscriptionRouter);
+router.use("/shared-lists", authMiddleware, sharingRouter);
 
 export default router;

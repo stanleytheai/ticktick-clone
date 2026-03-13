@@ -425,3 +425,83 @@ export const PREMIUM_TIER_LIMITS = {
   maxMembersPerList: 29,
   maxCalendarSubscriptions: Infinity,
 } as const;
+
+// ── Collaboration schemas ──────────────────────────────
+
+export const PermissionEnum = z.enum(["view", "edit", "admin"]);
+export type Permission = z.infer<typeof PermissionEnum>;
+
+export const ShareListSchema = z.object({
+  email: z.string().email(),
+  permission: PermissionEnum.default("edit"),
+});
+
+export const UpdateMemberSchema = z.object({
+  permission: PermissionEnum,
+});
+
+export const CreateCommentSchema = z.object({
+  text: z.string().min(1).max(5000),
+  mentions: z.array(z.string()).default([]),
+});
+
+export const AssignTaskSchema = z.object({
+  assigneeId: z.string().nullable(),
+});
+
+export interface MemberInfo {
+  role: Permission;
+  email: string;
+  displayName?: string;
+  addedAt: string;
+}
+
+export interface SharedListDoc {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  ownerId: string;
+  members: Record<string, MemberInfo>;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SharedTaskDoc {
+  id: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  startDate?: string;
+  duration?: number;
+  priority: Priority;
+  tags: string[];
+  completed: boolean;
+  completedAt?: string;
+  assigneeId?: string;
+  sortOrder: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentDoc {
+  id: string;
+  text: string;
+  authorId: string;
+  authorName?: string;
+  mentions: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActivityDoc {
+  id: string;
+  type: string;
+  actorId: string;
+  actorName?: string;
+  description: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
