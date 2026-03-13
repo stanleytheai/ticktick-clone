@@ -26,6 +26,9 @@ class Task {
   final String description;
   final String listId;
   final DateTime? dueDate;
+  final DateTime? startDate;
+  final int? duration; // in minutes
+  final List<String> dependsOn; // task IDs this task depends on
   final TaskPriority priority;
   final List<String> tags;
   final List<Subtask> subtasks;
@@ -41,6 +44,9 @@ class Task {
     this.description = '',
     required this.listId,
     this.dueDate,
+    this.startDate,
+    this.duration,
+    this.dependsOn = const [],
     this.priority = TaskPriority.none,
     this.tags = const [],
     this.subtasks = const [],
@@ -58,6 +64,11 @@ class Task {
     String? listId,
     DateTime? dueDate,
     bool clearDueDate = false,
+    DateTime? startDate,
+    bool clearStartDate = false,
+    int? duration,
+    bool clearDuration = false,
+    List<String>? dependsOn,
     TaskPriority? priority,
     List<String>? tags,
     List<Subtask>? subtasks,
@@ -73,6 +84,9 @@ class Task {
       description: description ?? this.description,
       listId: listId ?? this.listId,
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
+      startDate: clearStartDate ? null : (startDate ?? this.startDate),
+      duration: clearDuration ? null : (duration ?? this.duration),
+      dependsOn: dependsOn ?? this.dependsOn,
       priority: priority ?? this.priority,
       tags: tags ?? this.tags,
       subtasks: subtasks ?? this.subtasks,
@@ -90,6 +104,9 @@ class Task {
       'description': description,
       'listId': listId,
       'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
+      'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
+      'duration': duration,
+      'dependsOn': dependsOn,
       'priority': priority.value,
       'tags': tags,
       'subtasks': subtasks.map((s) => s.toMap()).toList(),
@@ -108,6 +125,9 @@ class Task {
       description: map['description'] as String? ?? '',
       listId: map['listId'] as String? ?? '',
       dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
+      startDate: (map['startDate'] as Timestamp?)?.toDate(),
+      duration: map['duration'] as int?,
+      dependsOn: List<String>.from(map['dependsOn'] as List? ?? []),
       priority: TaskPriority.fromValue(map['priority'] as int? ?? 0),
       tags: List<String>.from(map['tags'] as List? ?? []),
       subtasks: (map['subtasks'] as List? ?? [])

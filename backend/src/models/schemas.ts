@@ -38,6 +38,7 @@ export const CreateTaskSchema = z.object({
   dueDate: z.string().datetime().optional(),
   startDate: z.string().datetime().optional(),
   duration: z.number().int().min(0).optional(),
+  dependsOn: z.array(z.string()).default([]),
   priority: PriorityEnum.default("none"),
   tags: z.array(z.string()).default([]),
   listId: z.string().optional(),
@@ -132,6 +133,7 @@ export interface TaskDoc {
   dueDate?: string;
   startDate?: string;
   duration?: number;
+  dependsOn: string[];
   priority: Priority;
   tags: string[];
   listId?: string;
