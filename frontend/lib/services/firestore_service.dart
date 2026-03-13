@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ticktick_clone/models/habit.dart';
+import 'package:ticktick_clone/models/pomodoro_session.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/models/task_list.dart';
 
@@ -123,6 +124,53 @@ class FirestoreService {
   Future<void> deleteHabitLog(
       String userId, String habitId, String date) {
     return _habitLogsRef(userId, habitId).doc(date).delete();
+  }
+
+  // Pomodoro Sessions
+  CollectionReference<Map<String, dynamic>> _pomodoroRef(String userId) =>
+      _db.collection('users').doc(userId).collection('pomodoroSessions');
+
+  Stream<List<PomodoroSession>> watchPomodoroSessions(String userId) {
+    return _pomodoroRef(userId)
+        .orderBy('startTime', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => PomodoroSession.fromMap(d.id, d.data()))
+            .toList());
+  }
+
+  Future<PomodoroSession> startPomodoroSession(
+      String userId, PomodoroSession session) async {
+    final docRef = await _pomodoroRef(userId).add(session.toMap());
+    return session.copyWith(id: docRef.id);
+  }
+
+  Future<void> stopPomodoroSession(
+      String userId, String sessionId, bool completed) {
+    return _pomodoroRef(userId).doc(sessionId).update({
+      'endTime': Timestamp.fromDate(DateTime.now()),
+      'completed': completed,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<void> updatePomodoroSession(
+      String userId, PomodoroSession session) {
+    return _pomodoroRef(userId).doc(session.id).update(session.toMap());
+  }
+
+  Stream<List<PomodoroSession>> watchTodayPomodoroSessions(String userId) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    return _pomodoroRef(userId)
+        .where('startTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .orderBy('startTime', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => PomodoroSession.fromMap(d.id, d.data()))
+            .toList());
   }
 
   // Create default Inbox list for new users

@@ -80,7 +80,51 @@ export const CreateTagSchema = z.object({
 
 export const UpdateTagSchema = CreateTagSchema.partial();
 
+// Pomodoro session type
+export const PomodoroSessionTypeEnum = z.enum(["work", "short_break", "long_break"]);
+export type PomodoroSessionType = z.infer<typeof PomodoroSessionTypeEnum>;
+
+// Ambient sound type
+export const AmbientSoundEnum = z.enum([
+  "rain",
+  "forest",
+  "cafe",
+  "ocean",
+  "fireplace",
+]);
+export type AmbientSound = z.infer<typeof AmbientSoundEnum>;
+
+// Pomodoro schemas
+export const StartPomodoroSchema = z.object({
+  taskId: z.string().optional(),
+  sessionType: PomodoroSessionTypeEnum.default("work"),
+  durationMinutes: z.number().int().min(1).max(120).default(25),
+  ambientSounds: z.array(AmbientSoundEnum).default([]),
+});
+
+export const StopPomodoroSchema = z.object({
+  completed: z.boolean().default(true),
+});
+
+export const PomodoroStatsQuerySchema = z.object({
+  period: z.enum(["daily", "weekly", "monthly"]).default("daily"),
+  date: z.string().datetime().optional(),
+});
+
 // Firestore document types
+export interface PomodoroSessionDoc {
+  id: string;
+  taskId?: string;
+  sessionType: PomodoroSessionType;
+  durationMinutes: number;
+  startTime: string;
+  endTime?: string;
+  completed: boolean;
+  ambientSounds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TaskDoc {
   id: string;
   title: string;

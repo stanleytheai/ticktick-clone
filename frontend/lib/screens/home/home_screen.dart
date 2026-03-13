@@ -4,6 +4,7 @@ import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/eisenhower/eisenhower_screen.dart';
+import 'package:ticktick_clone/screens/pomodoro/pomodoro_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
 import 'package:ticktick_clone/screens/habits/habits_screen.dart';
@@ -29,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
     final screens = [
       const _TodayTab(),
       const CalendarScreen(),
+      const PomodoroScreen(),
       const EisenhowerScreen(),
       const TaskListScreen(listId: 'inbox', title: 'Inbox'),
       const ListsScreen(),
@@ -58,6 +60,10 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(Icons.calendar_month_outlined),
               selectedIcon: Icon(Icons.calendar_month),
               label: 'Calendar'),
+          NavigationDestination(
+              icon: Icon(Icons.timer_outlined),
+              selectedIcon: Icon(Icons.timer),
+              label: 'Focus'),
           NavigationDestination(
               icon: Icon(Icons.grid_view_outlined),
               selectedIcon: Icon(Icons.grid_view),
