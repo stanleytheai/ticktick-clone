@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ticktick_clone/models/habit.dart';
 import 'package:ticktick_clone/models/pomodoro_session.dart';
+import 'package:ticktick_clone/models/smart_filter.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/models/task_list.dart';
 
@@ -171,6 +172,30 @@ class FirestoreService {
         .map((snap) => snap.docs
             .map((d) => PomodoroSession.fromMap(d.id, d.data()))
             .toList());
+  }
+
+  // Filters
+  CollectionReference<Map<String, dynamic>> _filtersRef(String userId) =>
+      _db.collection('users').doc(userId).collection('filters');
+
+  Stream<List<SmartFilter>> watchFilters(String userId) {
+    return _filtersRef(userId)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => SmartFilter.fromMap(d.id, d.data())).toList());
+  }
+
+  Future<void> addFilter(String userId, SmartFilter filter) {
+    return _filtersRef(userId).doc(filter.id).set(filter.toMap());
+  }
+
+  Future<void> updateFilter(String userId, SmartFilter filter) {
+    return _filtersRef(userId).doc(filter.id).update(filter.toMap());
+  }
+
+  Future<void> deleteFilter(String userId, String filterId) {
+    return _filtersRef(userId).doc(filterId).delete();
   }
 
   // Create default Inbox list for new users

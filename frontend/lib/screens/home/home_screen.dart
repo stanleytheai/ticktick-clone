@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
+import 'package:ticktick_clone/providers/filter_provider.dart';
 import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/eisenhower/eisenhower_screen.dart';
+import 'package:ticktick_clone/screens/filters/filter_builder_screen.dart';
+import 'package:ticktick_clone/screens/filters/smart_list_screen.dart';
 import 'package:ticktick_clone/screens/pomodoro/pomodoro_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
@@ -39,6 +42,7 @@ class HomeScreen extends ConsumerWidget {
     ];
 
     return Scaffold(
+      drawer: const _SmartListDrawer(),
       body: IndexedStack(index: selectedTab, children: screens),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showDialog(
@@ -86,6 +90,217 @@ class HomeScreen extends ConsumerWidget {
               label: 'Settings'),
         ],
       ),
+    );
+  }
+}
+
+class _SmartListDrawer extends ConsumerWidget {
+  const _SmartListDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final pinnedFilters = ref.watch(pinnedFiltersProvider);
+    final allFilters = ref.watch(filtersStreamProvider).value ?? [];
+
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text('Smart Lists',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+            ),
+            const Divider(),
+
+            // Built-in smart lists
+            _DrawerSmartListTile(
+              icon: Icons.today,
+              title: 'Today',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.today),
+                  ),
+                );
+              },
+            ),
+            _DrawerSmartListTile(
+              icon: Icons.next_plan,
+              title: 'Tomorrow',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.tomorrow),
+                  ),
+                );
+              },
+            ),
+            _DrawerSmartListTile(
+              icon: Icons.date_range,
+              title: 'Next 7 Days',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.next7Days),
+                  ),
+                );
+              },
+            ),
+            _DrawerSmartListTile(
+              icon: Icons.all_inclusive,
+              title: 'All',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.all),
+                  ),
+                );
+              },
+            ),
+            _DrawerSmartListTile(
+              icon: Icons.task_alt,
+              title: 'Completed',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.completed),
+                  ),
+                );
+              },
+            ),
+            _DrawerSmartListTile(
+              icon: Icons.delete_outline,
+              title: 'Trash',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BuiltInSmartListScreen(
+                        smartList: BuiltInSmartList.trash),
+                  ),
+                );
+              },
+            ),
+
+            // Pinned custom filters
+            if (pinnedFilters.isNotEmpty) ...[
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text('Pinned Filters',
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ),
+              ...pinnedFilters.map((filter) => _DrawerSmartListTile(
+                    icon: Icons.filter_list,
+                    title: filter.name,
+                    color: filter.colorValue != null
+                        ? Color(filter.colorValue!)
+                        : null,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SmartListScreen(filter: filter),
+                        ),
+                      );
+                    },
+                  )),
+            ],
+
+            // All custom filters section
+            if (allFilters.isNotEmpty) ...[
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text('Custom Filters',
+                    style: theme.textTheme.labelLarge
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ),
+              ...allFilters
+                  .where((f) => !f.pinned)
+                  .map((filter) => _DrawerSmartListTile(
+                        icon: Icons.filter_list,
+                        title: filter.name,
+                        color: filter.colorValue != null
+                            ? Color(filter.colorValue!)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  SmartListScreen(filter: filter),
+                            ),
+                          );
+                        },
+                      )),
+            ],
+
+            // Create new filter button
+            const Divider(),
+            _DrawerSmartListTile(
+              icon: Icons.add,
+              title: 'New Smart List',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FilterBuilderScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerSmartListTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _DrawerSmartListTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      onTap: onTap,
+      dense: true,
     );
   }
 }

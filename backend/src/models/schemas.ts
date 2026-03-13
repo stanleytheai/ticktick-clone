@@ -230,3 +230,64 @@ export interface HabitLogDoc {
   skipped: boolean;
   createdAt: string;
 }
+
+// Filter criteria types
+export const FilterCriterionTypeEnum = z.enum([
+  "dueDate",
+  "priority",
+  "tag",
+  "list",
+  "completed",
+  "keyword",
+  "createdDate",
+]);
+export type FilterCriterionType = z.infer<typeof FilterCriterionTypeEnum>;
+
+export const FilterOperatorEnum = z.enum([
+  "equals",
+  "notEquals",
+  "before",
+  "after",
+  "between",
+  "contains",
+  "isSet",
+  "isNotSet",
+]);
+export type FilterOperator = z.infer<typeof FilterOperatorEnum>;
+
+export const FilterCriterionSchema = z.object({
+  type: FilterCriterionTypeEnum,
+  operator: FilterOperatorEnum,
+  value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]).optional(),
+  valueTo: z.string().optional(), // for "between" operator
+});
+
+export type FilterCriterion = z.infer<typeof FilterCriterionSchema>;
+
+export const FilterLogicEnum = z.enum(["and", "or"]);
+export type FilterLogic = z.infer<typeof FilterLogicEnum>;
+
+export const CreateFilterSchema = z.object({
+  name: z.string().min(1).max(200),
+  criteria: z.array(FilterCriterionSchema).min(1).max(20),
+  logic: FilterLogicEnum.default("and"),
+  icon: z.string().max(50).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  pinned: z.boolean().default(false),
+  sortOrder: z.number().default(0),
+});
+
+export const UpdateFilterSchema = CreateFilterSchema.partial();
+
+export interface FilterDoc {
+  id: string;
+  name: string;
+  criteria: FilterCriterion[];
+  logic: FilterLogic;
+  icon?: string;
+  color?: string;
+  pinned: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
