@@ -19,6 +19,9 @@ dependencies:
   uuid: ^4.5.1
   table_calendar: ^3.2.0
   fl_chart: ^0.70.2
+  file_picker: ^8.1.6
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

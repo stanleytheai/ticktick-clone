@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/settings_provider.dart';
+import 'package:ticktick_clone/screens/integrations/import_screen.dart';
+import 'package:ticktick_clone/screens/integrations/export_screen.dart';
+import 'package:ticktick_clone/screens/integrations/webhooks_screen.dart';
+import 'package:ticktick_clone/screens/integrations/calendar_sync_screen.dart';
+import 'package:ticktick_clone/screens/integrations/api_keys_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -56,6 +61,64 @@ class SettingsScreen extends ConsumerWidget {
               onSelectionChanged: (s) =>
                   ref.read(themeModeProvider.notifier).setThemeMode(s.first),
               showSelectedIcon: false,
+            ),
+          ),
+          const Divider(),
+
+          // Data section
+          _SectionHeader(title: 'Data'),
+          ListTile(
+            leading: const Icon(Icons.file_upload_outlined),
+            title: const Text('Import Tasks'),
+            subtitle: const Text('From Todoist, Microsoft To Do, Apple Reminders'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ImportScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_download_outlined),
+            title: const Text('Export Data'),
+            subtitle: const Text('CSV, JSON, or text backup'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExportScreen()),
+            ),
+          ),
+          const Divider(),
+
+          // Integrations section
+          _SectionHeader(title: 'Integrations'),
+          ListTile(
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: const Text('Calendar Sync'),
+            subtitle: const Text('Google, Outlook, Apple Calendar'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarSyncScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.webhook_outlined),
+            title: const Text('Webhooks'),
+            subtitle: const Text('Real-time event notifications'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WebhooksScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.api_outlined),
+            title: const Text('API & OAuth'),
+            subtitle: const Text('REST API access for third-party apps'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ApiKeysScreen()),
             ),
           ),
           const Divider(),

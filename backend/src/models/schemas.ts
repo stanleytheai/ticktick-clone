@@ -231,6 +231,125 @@ export interface HabitLogDoc {
   createdAt: string;
 }
 
+// Import source types
+export const ImportSourceEnum = z.enum([
+  "todoist",
+  "microsoft_todo",
+  "apple_reminders",
+]);
+export type ImportSource = z.infer<typeof ImportSourceEnum>;
+
+// Export format types
+export const ExportFormatEnum = z.enum(["csv", "json", "text"]);
+export type ExportFormat = z.infer<typeof ExportFormatEnum>;
+
+// Import schema
+export const ImportDataSchema = z.object({
+  source: ImportSourceEnum,
+  data: z.string().min(1).max(10_000_000), // raw file content (up to 10MB)
+});
+
+// Export schema
+export const ExportRequestSchema = z.object({
+  format: ExportFormatEnum,
+  listIds: z.array(z.string()).optional(), // filter by lists, or all if omitted
+  includeCompleted: z.boolean().default(true),
+});
+
+// Webhook event types
+export const WebhookEventEnum = z.enum([
+  "task.created",
+  "task.updated",
+  "task.completed",
+  "task.deleted",
+  "list.created",
+  "list.updated",
+  "list.deleted",
+]);
+export type WebhookEvent = z.infer<typeof WebhookEventEnum>;
+
+// Webhook schemas
+export const CreateWebhookSchema = z.object({
+  url: z.string().url().max(2000),
+  events: z.array(WebhookEventEnum).min(1),
+  secret: z.string().min(16).max(256).optional(), // optional shared secret for HMAC
+  active: z.boolean().default(true),
+});
+
+export const UpdateWebhookSchema = CreateWebhookSchema.partial();
+
+export interface WebhookDoc {
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  secret?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// OAuth client schemas
+export const CreateOAuthClientSchema = z.object({
+  name: z.string().min(1).max(200),
+  redirectUris: z.array(z.string().url()).min(1).max(10),
+  scopes: z.array(z.string()).min(1),
+});
+
+export interface OAuthClientDoc {
+  id: string;
+  name: string;
+  clientSecret: string;
+  redirectUris: string[];
+  scopes: string[];
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Calendar sync schemas
+export const CalendarSyncProviderEnum = z.enum(["google", "outlook", "apple"]);
+export type CalendarSyncProvider = z.infer<typeof CalendarSyncProviderEnum>;
+
+export const CreateCalendarSyncSchema = z.object({
+  provider: CalendarSyncProviderEnum,
+  accessToken: z.string().min(1),
+  refreshToken: z.string().optional(),
+  calendarId: z.string().min(1),
+  syncEnabled: z.boolean().default(true),
+});
+
+export const UpdateCalendarSyncSchema = z.object({
+  accessToken: z.string().min(1).optional(),
+  refreshToken: z.string().optional(),
+  calendarId: z.string().min(1).optional(),
+  syncEnabled: z.boolean().optional(),
+});
+
+export interface CalendarSyncDoc {
+  id: string;
+  provider: CalendarSyncProvider;
+  calendarId: string;
+  syncEnabled: boolean;
+  lastSyncAt?: string;
+  syncToken?: string; // provider-specific incremental sync token
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarEventDoc {
+  id: string;
+  externalId: string; // ID from the calendar provider
+  provider: CalendarSyncProvider;
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  taskId?: string; // linked task if synced from our system
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Filter criteria types
 export const FilterCriterionTypeEnum = z.enum([
   "dueDate",
