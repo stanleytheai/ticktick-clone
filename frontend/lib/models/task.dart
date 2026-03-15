@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ticktick_clone/models/reminder.dart';
 import 'package:ticktick_clone/models/subtask.dart';
 
 enum TaskPriority {
@@ -36,6 +37,7 @@ class Task {
   final String userId;
   final int sortOrder;
   final String? assigneeId;
+  final List<Reminder> reminders;
 
   const Task({
     required this.id,
@@ -53,6 +55,7 @@ class Task {
     required this.userId,
     this.sortOrder = 0,
     this.assigneeId,
+    this.reminders = const [],
   });
 
   Task copyWith({
@@ -74,6 +77,7 @@ class Task {
     int? sortOrder,
     String? assigneeId,
     bool clearAssignee = false,
+    List<Reminder>? reminders,
   }) {
     return Task(
       id: id ?? this.id,
@@ -91,6 +95,7 @@ class Task {
       userId: userId ?? this.userId,
       sortOrder: sortOrder ?? this.sortOrder,
       assigneeId: clearAssignee ? null : (assigneeId ?? this.assigneeId),
+      reminders: reminders ?? this.reminders,
     );
   }
 
@@ -110,6 +115,7 @@ class Task {
       'userId': userId,
       'sortOrder': sortOrder,
       if (assigneeId != null) 'assigneeId': assigneeId,
+      'reminders': reminders.map((r) => r.toMap()).toList(),
     };
   }
 
@@ -132,6 +138,9 @@ class Task {
       userId: map['userId'] as String? ?? '',
       sortOrder: map['sortOrder'] as int? ?? 0,
       assigneeId: map['assigneeId'] as String?,
+      reminders: (map['reminders'] as List? ?? [])
+          .map((r) => Reminder.fromMap(r as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

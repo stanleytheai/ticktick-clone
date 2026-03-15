@@ -237,6 +237,38 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
 
+          // Quiet Hours / Do Not Disturb
+          const _SectionHeader(title: 'Quiet Hours'),
+          SwitchListTile(
+            secondary: const Icon(Icons.do_not_disturb_on),
+            title: const Text('Do Not Disturb'),
+            subtitle: Text(settings.quietHoursEnabled
+                ? '${settings.quietHoursStart} – ${settings.quietHoursEnd}'
+                : 'No notifications during quiet hours'),
+            value: settings.quietHoursEnabled,
+            onChanged: (v) =>
+                _updateSetting(ref, settings, quietHoursEnabled: v),
+          ),
+          if (settings.quietHoursEnabled) ...[
+            ListTile(
+              leading: const Icon(Icons.nightlight_round),
+              title: const Text('Start Time'),
+              trailing: Text(settings.quietHoursStart,
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              onTap: () => _pickQuietHourTime(
+                  context, ref, settings, isStart: true),
+            ),
+            ListTile(
+              leading: const Icon(Icons.wb_sunny_outlined),
+              title: const Text('End Time'),
+              trailing: Text(settings.quietHoursEnd,
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              onTap: () => _pickQuietHourTime(
+                  context, ref, settings, isStart: false),
+            ),
+          ],
+          const Divider(),
+
           // Data section
           const _SectionHeader(title: 'Data'),
           ListTile(
@@ -287,6 +319,9 @@ class SettingsScreen extends ConsumerWidget {
     String? language,
     bool? soundEnabled,
     bool? notificationsEnabled,
+    bool? quietHoursEnabled,
+    String? quietHoursStart,
+    String? quietHoursEnd,
   }) {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
@@ -302,9 +337,38 @@ class SettingsScreen extends ConsumerWidget {
       language: language,
       soundEnabled: soundEnabled,
       notificationsEnabled: notificationsEnabled,
+      quietHoursEnabled: quietHoursEnabled,
+      quietHoursStart: quietHoursStart,
+      quietHoursEnd: quietHoursEnd,
     );
 
     ref.read(firestoreServiceProvider).updateSettings(user.uid, updated);
+  }
+
+  void _pickQuietHourTime(
+    BuildContext context,
+    WidgetRef ref,
+    UserSettings settings, {
+    required bool isStart,
+  }) async {
+    final current = isStart ? settings.quietHoursStart : settings.quietHoursEnd;
+    final parts = current.split(':').map(int.parse).toList();
+    final initialTime = TimeOfDay(hour: parts[0], minute: parts[1]);
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (picked == null) return;
+
+    final formatted =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+
+    if (isStart) {
+      _updateSetting(ref, settings, quietHoursStart: formatted);
+    } else {
+      _updateSetting(ref, settings, quietHoursEnd: formatted);
+    }
   }
 
   String _reminderLabel(int minutes) {

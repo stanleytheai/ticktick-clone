@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ticktick_clone/models/activity_entry.dart';
+import 'package:ticktick_clone/models/app_notification.dart';
 import 'package:ticktick_clone/models/comment.dart';
 import 'package:ticktick_clone/models/focus_session.dart';
 import 'package:ticktick_clone/models/habit.dart';
@@ -503,5 +504,92 @@ class FirestoreService {
       'metadata': entry.metadata,
       'createdAt': Timestamp.fromDate(entry.createdAt),
     });
+  }
+
+  // ── Notifications ───────────────────────────────────
+
+  CollectionReference<Map<String, dynamic>> _notificationsRef(String userId) =>
+      _db.collection('users').doc(userId).collection('notifications');
+
+  Stream<List<AppNotification>> watchNotifications(String userId) {
+    return _notificationsRef(userId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => AppNotification.fromMap(d.id, d.data()))
+            .toList());
+  }
+
+  Stream<int> watchUnreadNotificationCount(String userId) {
+    return _notificationsRef(userId)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .map((snap) => snap.docs.length);
+  }
+
+  Future<void> markNotificationRead(String userId, String notificationId) {
+    return _notificationsRef(userId).doc(notificationId).update({
+      'read': true,
+    });
+  }
+
+  Future<void> markAllNotificationsRead(String userId) async {
+    final snap = await _notificationsRef(userId)
+        .where('read', isEqualTo: false)
+        .get();
+    if (snap.docs.isEmpty) return;
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.update(doc.reference, {'read': true});
+    }
+    await batch.commit();
+  }
+
+  Future<void> deleteNotification(String userId, String notificationId) {
+    return _notificationsRef(userId).doc(notificationId).delete();
+  }
+
+  Future<void> clearAllNotifications(String userId) async {
+    final snap = await _notificationsRef(userId).get();
+    if (snap.docs.isEmpty) return;
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  // Create a local notification (for reminders triggered client-side)
+  Future<void> createNotification(
+      String userId, AppNotification notification) {
+    return _notificationsRef(userId)
+        .doc(notification.id)
+        .set(notification.toMap());
+  }
+
+  // ── FCM Tokens ──────────────────────────────────────
+
+  Future<void> registerFcmToken(
+      String userId, String token, String platform) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('fcmTokens')
+        .doc(token)
+        .set({
+      'token': token,
+      'platform': platform,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<void> removeFcmToken(String userId, String token) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('fcmTokens')
+        .doc(token)
+        .delete();
   }
 }

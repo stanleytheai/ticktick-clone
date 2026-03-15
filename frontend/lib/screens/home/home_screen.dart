@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ticktick_clone/models/task.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/filter_provider.dart';
+import 'package:ticktick_clone/providers/notification_provider.dart';
 import 'package:ticktick_clone/screens/calendar/calendar_screen.dart';
 import 'package:ticktick_clone/screens/eisenhower/eisenhower_screen.dart';
 import 'package:ticktick_clone/screens/filters/filter_builder_screen.dart';
 import 'package:ticktick_clone/screens/filters/smart_list_screen.dart';
 import 'package:ticktick_clone/screens/kanban/kanban_screen.dart';
+import 'package:ticktick_clone/screens/notifications/notification_center_screen.dart';
 import 'package:ticktick_clone/screens/pomodoro/pomodoro_screen.dart';
 import 'package:ticktick_clone/screens/tasks/task_list_screen.dart';
 import 'package:ticktick_clone/screens/lists/lists_screen.dart';
@@ -333,6 +335,7 @@ class _TodayTab extends ConsumerWidget {
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
+          _NotificationBell(),
           IconButton(
             icon: const Icon(Icons.bar_chart_rounded),
             tooltip: 'Statistics',
@@ -364,6 +367,26 @@ class _TodayTab extends ConsumerWidget {
                 return _TaskTile(task: task);
               },
             ),
+    );
+  }
+}
+
+class _NotificationBell extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadCountProvider);
+
+    return IconButton(
+      icon: Badge(
+        isLabelVisible: unreadCount > 0,
+        label: Text('$unreadCount'),
+        child: const Icon(Icons.notifications_outlined),
+      ),
+      tooltip: 'Notifications',
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(
+            builder: (_) => const NotificationCenterScreen()),
+      ),
     );
   }
 }

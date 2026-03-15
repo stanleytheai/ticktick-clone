@@ -9,6 +9,9 @@ class UserSettings {
   final String language;
   final bool soundEnabled;
   final bool notificationsEnabled;
+  final bool quietHoursEnabled;
+  final String quietHoursStart; // HH:mm
+  final String quietHoursEnd; // HH:mm
 
   const UserSettings({
     this.theme = 'system',
@@ -21,6 +24,9 @@ class UserSettings {
     this.language = 'en',
     this.soundEnabled = true,
     this.notificationsEnabled = true,
+    this.quietHoursEnabled = false,
+    this.quietHoursStart = '22:00',
+    this.quietHoursEnd = '07:00',
   });
 
   static const defaultSettings = UserSettings();
@@ -37,6 +43,9 @@ class UserSettings {
       language: map['language'] as String? ?? 'en',
       soundEnabled: map['soundEnabled'] as bool? ?? true,
       notificationsEnabled: map['notificationsEnabled'] as bool? ?? true,
+      quietHoursEnabled: map['quietHoursEnabled'] as bool? ?? false,
+      quietHoursStart: map['quietHoursStart'] as String? ?? '22:00',
+      quietHoursEnd: map['quietHoursEnd'] as String? ?? '07:00',
     );
   }
 
@@ -52,6 +61,9 @@ class UserSettings {
       'language': language,
       'soundEnabled': soundEnabled,
       'notificationsEnabled': notificationsEnabled,
+      'quietHoursEnabled': quietHoursEnabled,
+      'quietHoursStart': quietHoursStart,
+      'quietHoursEnd': quietHoursEnd,
     };
   }
 
@@ -66,6 +78,9 @@ class UserSettings {
     String? language,
     bool? soundEnabled,
     bool? notificationsEnabled,
+    bool? quietHoursEnabled,
+    String? quietHoursStart,
+    String? quietHoursEnd,
   }) {
     return UserSettings(
       theme: theme ?? this.theme,
@@ -79,6 +94,9 @@ class UserSettings {
       language: language ?? this.language,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
+      quietHoursStart: quietHoursStart ?? this.quietHoursStart,
+      quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
     );
   }
 }

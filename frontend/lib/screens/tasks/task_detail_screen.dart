@@ -8,6 +8,8 @@ import 'package:ticktick_clone/models/subtask.dart';
 import 'package:ticktick_clone/providers/auth_provider.dart';
 import 'package:ticktick_clone/providers/task_provider.dart';
 import 'package:ticktick_clone/providers/list_provider.dart';
+import 'package:ticktick_clone/providers/subscription_provider.dart';
+import 'package:ticktick_clone/widgets/reminder_picker.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -212,6 +214,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
           const Divider(),
 
+          // Reminders
+          _buildRemindersSection(task, ref),
+
+          const Divider(),
+
           // Description with markdown support
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -308,6 +315,23 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRemindersSection(Task task, WidgetRef ref) {
+    final subscription = ref.watch(subscriptionProvider);
+    final isPremium = subscription.value?.isPremium ?? false;
+    final maxReminders = isPremium ? 5 : 2;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ReminderPicker(
+        reminders: task.reminders,
+        maxReminders: maxReminders,
+        onChanged: (reminders) {
+          _saveTask(task.copyWith(reminders: reminders));
+        },
       ),
     );
   }
