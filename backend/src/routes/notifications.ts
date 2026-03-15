@@ -9,7 +9,6 @@ import {
   NotificationDoc,
   Reminder,
 } from "../models/schemas";
-import { computeAllTriggerTimes } from "../services/reminder-scheduler";
 
 const router = Router();
 
