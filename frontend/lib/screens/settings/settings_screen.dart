@@ -9,6 +9,9 @@ import 'package:ticktick_clone/providers/settings_provider.dart';
 import 'package:ticktick_clone/screens/settings/profile_screen.dart';
 import 'package:ticktick_clone/providers/subscription_provider.dart';
 import 'package:ticktick_clone/screens/subscription/paywall_screen.dart';
+import 'package:ticktick_clone/screens/integrations/import_export_screen.dart';
+import 'package:ticktick_clone/screens/integrations/calendar_sync_screen.dart';
+import 'package:ticktick_clone/screens/integrations/developer_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -267,6 +270,40 @@ class SettingsScreen extends ConsumerWidget {
                   context, ref, settings, isStart: false),
             ),
           ],
+          const Divider(),
+
+          // Integrations section
+          const _SectionHeader(title: 'Integrations'),
+          ListTile(
+            leading: const Icon(Icons.swap_horiz),
+            title: const Text('Import & Export'),
+            subtitle: const Text('Import from Todoist, To Do, Reminders; export CSV, JSON, text'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ImportExportScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_month),
+            title: const Text('Calendar Sync'),
+            subtitle: const Text('Google Calendar two-way sync'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarSyncScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: const Text('Developer & API'),
+            subtitle: const Text('OAuth clients, REST API, webhooks'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DeveloperScreen()),
+            ),
+          ),
           const Divider(),
 
           // Data section

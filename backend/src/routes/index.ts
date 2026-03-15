@@ -14,6 +14,11 @@ import notesRouter from "./notes";
 import subscriptionRouter from "./subscription";
 import sharingRouter from "./sharing";
 import notificationsRouter from "./notifications";
+import importRouter from "./import";
+import exportRouter from "./export";
+import calendarRouter from "./calendar";
+import apiClientsRouter from "./api-clients";
+import webhooksRouter from "./webhooks";
 import { authMiddleware } from "../middleware/auth";
 import { loadSubscription } from "../middleware/subscription";
 
@@ -37,5 +42,12 @@ router.use("/notes", authMiddleware, notesRouter);
 router.use("/subscription", authMiddleware, loadSubscription, subscriptionRouter);
 router.use("/shared-lists", authMiddleware, sharingRouter);
 router.use("/notifications", authMiddleware, loadSubscription, notificationsRouter);
+
+// Import/Export & Integrations
+router.use("/import", authMiddleware, importRouter);
+router.use("/export", authMiddleware, exportRouter);
+router.use("/calendar", authMiddleware, calendarRouter);
+router.use("/api-clients", authMiddleware, apiClientsRouter);
+router.use("/webhooks", authMiddleware, webhooksRouter);
 
 export default router;

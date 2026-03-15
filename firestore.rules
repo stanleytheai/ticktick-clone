@@ -138,6 +138,48 @@ service cloud.firestore {
       match /filters/{filterId} {
         allow read, write: if isOwner(uid);
       }
+
+      // ── Calendar Connections (subcollection) ──────
+      match /calendarConnections/{connectionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Calendar Mappings (subcollection) ─────────
+      match /calendarMappings/{mappingId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Calendar Sync Logs (subcollection) ────────
+      match /calendarSyncLogs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── API Clients (subcollection) ───────────────
+      match /apiClients/{clientId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Webhooks (subcollection) ──────────────────
+      match /webhooks/{webhookId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Webhook Logs (subcollection) ──────────────
+      match /webhookLogs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── OAuth Codes (server-managed, admin SDK access) ──
+    match /oauthCodes/{codeId} {
+      allow read: if false; // Server-only via admin SDK
+      allow write: if false;
+    }
+
+    // ── OAuth Tokens (server-managed, admin SDK access) ──
+    match /oauthTokens/{tokenId} {
+      allow read: if false; // Server-only via admin SDK
+      allow write: if false;
     }
 
     // ── Shared Lists ────────────────────────────────────
