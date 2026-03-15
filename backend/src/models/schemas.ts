@@ -31,6 +31,27 @@ export const RecurrenceRuleSchema = z.object({
 
 export type RecurrenceRule = z.infer<typeof RecurrenceRuleSchema>;
 
+// Reminder type
+export const ReminderTypeEnum = z.enum([
+  "at_time",
+  "minutes_before",
+  "hours_before",
+  "days_before",
+]);
+export type ReminderType = z.infer<typeof ReminderTypeEnum>;
+
+// Single reminder on a task
+export const ReminderSchema = z.object({
+  id: z.string(),
+  type: ReminderTypeEnum,
+  value: z.number().int().min(0).max(10080), // 0 for at_time, else offset
+  triggerAt: z.string().datetime().optional(), // computed absolute trigger time
+  snoozedUntil: z.string().datetime().optional(), // snooze support
+  dismissed: z.boolean().default(false),
+});
+
+export type Reminder = z.infer<typeof ReminderSchema>;
+
 // Task schemas
 export const CreateTaskSchema = z.object({
   title: z.string().min(1).max(500),
@@ -43,6 +64,7 @@ export const CreateTaskSchema = z.object({
   listId: z.string().optional(),
   sortOrder: z.number().default(0),
   recurrence: RecurrenceRuleSchema.optional(),
+  reminders: z.array(ReminderSchema).max(5).default([]),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
@@ -144,6 +166,9 @@ export const UserSettingsSchema = z.object({
   language: z.enum(["en", "es", "fr", "de", "ja", "zh", "pt", "ko"]).default("en"),
   soundEnabled: z.boolean().default(true),
   notificationsEnabled: z.boolean().default(true),
+  quietHoursEnabled: z.boolean().default(false),
+  quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).default("22:00"), // HH:mm
+  quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).default("07:00"), // HH:mm
 });
 
 export const UpdateUserSettingsSchema = UserSettingsSchema.partial();
@@ -173,6 +198,9 @@ export interface UserSettingsDoc {
   language: string;
   soundEnabled: boolean;
   notificationsEnabled: boolean;
+  quietHoursEnabled: boolean;
+  quietHoursStart: string; // HH:mm
+  quietHoursEnd: string; // HH:mm
   updatedAt: string;
 }
 
@@ -192,6 +220,7 @@ export interface TaskDoc {
   recurrence?: RecurrenceRule;
   recurrenceSourceId?: string; // links to the original recurring task
   recurrenceCount?: number; // how many occurrences have been created
+  reminders: Reminder[];
   createdAt: string;
   updatedAt: string;
 }
@@ -505,3 +534,43 @@ export interface ActivityDoc {
   metadata?: Record<string, unknown>;
   createdAt: string;
 }
+
+// ── Notification schemas ──────────────────────────────
+
+export const NotificationTypeEnum = z.enum([
+  "reminder",
+  "shared_list",
+  "comment",
+  "assignment",
+  "system",
+]);
+export type NotificationType = z.infer<typeof NotificationTypeEnum>;
+
+export interface NotificationDoc {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  taskId?: string;
+  listId?: string;
+  read: boolean;
+  actionUrl?: string;
+  createdAt: string;
+}
+
+// Snooze a reminder on a task
+export const SnoozeReminderSchema = z.object({
+  reminderId: z.string(),
+  snoozeDurationMinutes: z.number().int().min(1).max(10080), // 1 min to 1 week
+});
+
+// Dismiss a reminder on a task
+export const DismissReminderSchema = z.object({
+  reminderId: z.string(),
+});
+
+// Register FCM token for push notifications
+export const RegisterFcmTokenSchema = z.object({
+  token: z.string().min(1).max(500),
+  platform: z.enum(["android", "ios", "web"]),
+});

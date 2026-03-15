@@ -15,6 +15,7 @@ import {
   shouldCreateNextOccurrence,
 } from "../services/recurrence";
 import { parseTaskInput } from "../services/nlp-parser";
+import { computeAllTriggerTimes } from "../services/reminder-scheduler";
 
 const router = Router();
 
@@ -61,8 +62,28 @@ router.post("/", validate(CreateTaskSchema), async (req: Request, res: Response)
       }
     }
 
+    // Enforce reminders-per-task limit
+    const reminders = req.body.reminders ?? [];
+    if (reminders.length > limits.maxRemindersPerTask) {
+      res.status(403).json({
+        error: "Reminder limit per task reached",
+        code: "LIMIT_EXCEEDED",
+        limit: limits.maxRemindersPerTask,
+        current: reminders.length,
+        upgrade: true,
+      });
+      return;
+    }
+
+    // Compute trigger times for reminders
+    const computedReminders = computeAllTriggerTimes(
+      reminders,
+      req.body.dueDate
+    );
+
     const taskData: Omit<TaskDoc, "id"> = {
       ...req.body,
+      reminders: computedReminders,
       completed: false,
       createdAt: now,
       updatedAt: now,
@@ -165,7 +186,35 @@ router.put("/:id", validate(UpdateTaskSchema), async (req: Request, res: Respons
       res.status(404).json({ error: "Task not found" });
       return;
     }
-    const updateData = { ...req.body, updatedAt: new Date().toISOString() };
+
+    // Enforce reminders limit if reminders are being updated
+    if (req.body.reminders) {
+      const limits = getTierLimits(res);
+      if (req.body.reminders.length > limits.maxRemindersPerTask) {
+        res.status(403).json({
+          error: "Reminder limit per task reached",
+          code: "LIMIT_EXCEEDED",
+          limit: limits.maxRemindersPerTask,
+          current: req.body.reminders.length,
+          upgrade: true,
+        });
+        return;
+      }
+    }
+
+    const existingData = doc.data() as TaskDoc;
+    const dueDate = req.body.dueDate ?? existingData.dueDate;
+
+    // Recompute trigger times if reminders or dueDate changed
+    const updateData: Record<string, unknown> = {
+      ...req.body,
+      updatedAt: new Date().toISOString(),
+    };
+    if (req.body.reminders || req.body.dueDate !== undefined) {
+      const reminders = req.body.reminders ?? existingData.reminders ?? [];
+      updateData.reminders = computeAllTriggerTimes(reminders, dueDate);
+    }
+
     await docRef.update(updateData);
     res.json({ id: doc.id, ...doc.data(), ...updateData });
   } catch {
@@ -234,6 +283,16 @@ router.patch("/:id/complete", async (req: Request, res: Response) => {
           ).toISOString();
         }
 
+        // Recompute reminder trigger times for the new due date
+        const nextReminders = computeAllTriggerTimes(
+          (data.reminders ?? []).map((r) => ({
+            ...r,
+            dismissed: false,
+            snoozedUntil: undefined,
+          })),
+          nextDueDate ?? undefined
+        );
+
         const nextTaskData: Omit<TaskDoc, "id"> = {
           title: data.title,
           description: data.description,
@@ -248,6 +307,7 @@ router.patch("/:id/complete", async (req: Request, res: Response) => {
           recurrence: data.recurrence,
           recurrenceSourceId: data.recurrenceSourceId ?? doc.id,
           recurrenceCount: recurrenceCount,
+          reminders: nextReminders,
           createdAt: now,
           updatedAt: now,
         };
